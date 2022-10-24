@@ -61,13 +61,13 @@ class EcJacobian:
         return EcJacobian(x3, y3, z3)
 
 
-p = secp256k1.G * 42
-q = secp256k1.G * 24
-assert p + q == secp256k1.G * 66
-assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.G * 66
+p = secp256k1.G * secp256k1.Fr(42)
+q = secp256k1.G * secp256k1.Fr(24)
+assert p + q == secp256k1.G * secp256k1.Fr(66)
+assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.G * secp256k1.Fr(66)
 
-assert p + p == secp256k1.G * 84
-assert (EcJacobian.encode(p) + EcJacobian.encode(p)).decode() == secp256k1.G * 84
+assert p + p == secp256k1.G * secp256k1.Fr(84)
+assert (EcJacobian.encode(p) + EcJacobian.encode(p)).decode() == secp256k1.G * secp256k1.Fr(84)
 
 q = secp256k1.Ec(p.x, -p.y)
 assert p + q == secp256k1.I

@@ -11,8 +11,7 @@ assert((4 * A**3 + 27 * B**2) % P != 0)
 
 class Fp:
     def __init__(self, x):
-        assert(0 <= x < P)
-        self.x = x
+        self.x = x % P
 
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
@@ -29,7 +28,7 @@ class Fp:
     def __mul__(self, other):
         return Fp((self.x * other.x) % P)
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         return self * other ** -1
 
     def __pow__(self, other):
@@ -39,7 +38,33 @@ class Fp:
         return Fp(P - self.x)
 
 
-Fp.__truediv__ = Fp.__div__
+class Fr:
+    def __init__(self, x):
+        self.x = x % N
+
+    def __repr__(self):
+        return f'Fr(0x{self.x:064x})'
+
+    def __eq__(self, other):
+        return self.x == other.x
+
+    def __add__(self, other):
+        return Fr((self.x + other.x) % N)
+
+    def __sub__(self, other):
+        return Fr((self.x - other.x) % N)
+
+    def __mul__(self, other):
+        return Fr((self.x * other.x) % N)
+
+    def __truediv__(self, other):
+        return self * other ** -1
+
+    def __pow__(self, other):
+        return Fr(pow(self.x, other, N))
+
+    def __neg__(self):
+        return Fr(N - self.x)
 
 
 class Ec:
@@ -65,22 +90,23 @@ class Ec:
         x1, x2 = self.x, other.x
         y1, y2 = self.y, other.y
         if self.y == other.y:
-            s = (x1 ** 2 * Fp(3) + Fp(A)) / (y1 * Fp(2))
+            s = (Fp(3) * x1 * x1 + Fp(A)) / (Fp(2) * y1)
         else:
             s = (y2 - y1) / (x2 - x1)
         x3 = s ** 2 - x1 - x2
         y3 = s * (x1 - x3) - y1
         return Ec(x3, y3)
 
-    def __mul__(self, other):
+    def __mul__(self, k):
+        n = k.x
         result = I
         addend = self
-        while other:
-            b = other & 1
+        while n:
+            b = n & 1
             if b == 1:
                 result += addend
             addend = addend + addend
-            other = other >> 1
+            n = n >> 1
         return result
 
 
@@ -88,4 +114,3 @@ class Ec:
 I = Ec(Fp(0x0), Fp(0x0))
 # Generator point
 G = Ec(Fp(G_X), Fp(G_Y))
-assert(G * N == I)
