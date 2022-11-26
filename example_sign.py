@@ -27,8 +27,7 @@ while True:
 u1 = m / s
 u2 = r / s
 x = secp256k1.G * u1 + pubkey * u2
-if x == secp256k1.I:
-    print('fail')
+assert x != secp256k1.I
 v = secp256k1.Fr(x.x.x)
 assert v == r
 print('pass')

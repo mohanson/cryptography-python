@@ -69,7 +69,7 @@ class Fr:
 
 class Ec:
     def __init__(self, x, y):
-        if x != Fp(0) and y != Fp(0):
+        if x != Fp(0) or y != Fp(0):
             assert(y ** 2 == x ** 3 + Fp(A) * x + Fp(B))
         self.x = x
         self.y = y
