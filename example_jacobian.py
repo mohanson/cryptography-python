@@ -20,18 +20,6 @@ class EcJacobian:
         else:
             return secp256k1.Ec(self.x / self.z, self.y / self.z)
 
-    def double(self):
-        x, y, z = self.x, self.y, self.z
-        a = secp256k1.Fp(3) * x * x
-        b = y * z
-        c = x * y * b
-        d = a * a - secp256k1.Fp(8) * c
-        e = b * b
-        f = secp256k1.Fp(2) * d * b
-        g = a * (secp256k1.Fp(4) * c - d) - secp256k1.Fp(8) * y * y * e
-        h = secp256k1.Fp(8) * b * e
-        return EcJacobian(f, g, h)
-
     def __add__(self, other):
         x1, y1, z1 = self.x, self.y, self.z
         x2, y2, z2 = other.x, other.y, other.z
@@ -47,18 +35,34 @@ class EcJacobian:
             if u1 != u2:
                 return EcJacobian.encode(secp256k1.I)
             else:
-                return self.double()
-        u = u1 - u2
-        v = v1 - v2
-        w = z1 * z2
-        a = v * v
-        b = a * v2
-        c = v * a
-        d = u * u * w - c - b * secp256k1.Fp(2)
-        x3 = v * d
-        y3 = u * (b - d) - c * u2
-        z3 = c * w
-        return EcJacobian(x3, y3, z3)
+                t = secp256k1.Fp(secp256k1.A) * z1 * z1 + secp256k1.Fp(3) * x1 * x1
+                u = y1 * z1
+                v = u * x1 * y1
+                w = t * t - secp256k1.Fp(8) * v
+                x3 = secp256k1.Fp(2) * u * w
+                y3 = t * (secp256k1.Fp(4) * v - w) - secp256k1.Fp(8) * y1 * y1 * u * u
+                z3 = secp256k1.Fp(8) * u * u * u
+                return EcJacobian(x3, y3, z3)
+        else:
+            u = u1 - u2
+            v = v1 - v2
+            w = u * u * z1 * z2 - v * v * v - secp256k1.Fp(2) * v * v * x1 * z2
+            x3 = v * w
+            y3 = u * (v * v * x1 * z2 - w) - v * v * v * y1 * z2
+            z3 = v * v * v * z1 * z2
+            return EcJacobian(x3, y3, z3)
+
+    def __mul__(self, k):
+        n = k.x
+        result = secp256k1.I
+        addend = self
+        while n:
+            b = n & 1
+            if b == 1:
+                result += addend
+            addend = addend + addend
+            n = n >> 1
+        return result
 
 
 p = secp256k1.G * secp256k1.Fr(42)
@@ -69,6 +73,12 @@ assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.G * s
 assert p + p == secp256k1.G * secp256k1.Fr(84)
 assert (EcJacobian.encode(p) + EcJacobian.encode(p)).decode() == secp256k1.G * secp256k1.Fr(84)
 
-q = secp256k1.Ec(p.x, -p.y)
-assert p + q == secp256k1.I
-assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.I
+r = secp256k1.Ec(p.x, -p.y)
+assert p + r == secp256k1.I
+assert (EcJacobian.encode(p) + EcJacobian.encode(r)).decode() == secp256k1.I
+
+assert p + secp256k1.I == p
+assert (EcJacobian.encode(p) + EcJacobian.encode(secp256k1.I)).decode() == p
+
+assert p * secp256k1.Fr(42) == secp256k1.G * secp256k1.Fr(1764)
+assert (EcJacobian.encode(p) * secp256k1.Fr(42)).decode() == p * secp256k1.Fr(42)
