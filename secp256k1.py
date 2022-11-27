@@ -38,33 +38,33 @@ class Fp:
         return Fp(P - self.x)
 
 
-class Fr:
+class Fq:
     def __init__(self, x):
         self.x = x % N
 
     def __repr__(self):
-        return f'Fr(0x{self.x:064x})'
+        return f'Fq(0x{self.x:064x})'
 
     def __eq__(self, other):
         return self.x == other.x
 
     def __add__(self, other):
-        return Fr((self.x + other.x) % N)
+        return Fq((self.x + other.x) % N)
 
     def __sub__(self, other):
-        return Fr((self.x - other.x) % N)
+        return Fq((self.x - other.x) % N)
 
     def __mul__(self, other):
-        return Fr((self.x * other.x) % N)
+        return Fq((self.x * other.x) % N)
 
     def __truediv__(self, other):
         return self * other ** -1
 
     def __pow__(self, other):
-        return Fr(pow(self.x, other, N))
+        return Fq(pow(self.x, other, N))
 
     def __neg__(self):
-        return Fr(N - self.x)
+        return Fq(N - self.x)
 
 
 class Ec:

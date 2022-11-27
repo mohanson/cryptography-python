@@ -65,13 +65,13 @@ class EcJacobian:
         return result
 
 
-p = secp256k1.G * secp256k1.Fr(42)
-q = secp256k1.G * secp256k1.Fr(24)
-assert p + q == secp256k1.G * secp256k1.Fr(66)
-assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.G * secp256k1.Fr(66)
+p = secp256k1.G * secp256k1.Fq(42)
+q = secp256k1.G * secp256k1.Fq(24)
+assert p + q == secp256k1.G * secp256k1.Fq(66)
+assert (EcJacobian.encode(p) + EcJacobian.encode(q)).decode() == secp256k1.G * secp256k1.Fq(66)
 
-assert p + p == secp256k1.G * secp256k1.Fr(84)
-assert (EcJacobian.encode(p) + EcJacobian.encode(p)).decode() == secp256k1.G * secp256k1.Fr(84)
+assert p + p == secp256k1.G * secp256k1.Fq(84)
+assert (EcJacobian.encode(p) + EcJacobian.encode(p)).decode() == secp256k1.G * secp256k1.Fq(84)
 
 r = secp256k1.Ec(p.x, -p.y)
 assert p + r == secp256k1.I
@@ -80,5 +80,5 @@ assert (EcJacobian.encode(p) + EcJacobian.encode(r)).decode() == secp256k1.I
 assert p + secp256k1.I == p
 assert (EcJacobian.encode(p) + EcJacobian.encode(secp256k1.I)).decode() == p
 
-assert p * secp256k1.Fr(42) == secp256k1.G * secp256k1.Fr(1764)
-assert (EcJacobian.encode(p) * secp256k1.Fr(42)).decode() == p * secp256k1.Fr(42)
+assert p * secp256k1.Fq(42) == secp256k1.G * secp256k1.Fq(1764)
+assert (EcJacobian.encode(p) * secp256k1.Fq(42)).decode() == p * secp256k1.Fq(42)
