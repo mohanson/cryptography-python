@@ -30,20 +30,44 @@ class Fp:
         return Fp(P - self.x)
 
 
+def polyclr(c1):
+    for i in range(len(c1) - 1, -1, -1):
+        if c1[i] != Fp(0):
+            break
+    return c1[:i+1]
+
+
+def polydeg(c1):
+    d = len(c1) - 1
+    while c1[d] == Fp(0) and d:
+        d -= 1
+    return d
+
+
 def polyadd(c1, c2):
-    return [c1[i] + c2[i] for i in range(len(c1))]
+    p = [Fp(0) for _ in range(max(len(c1), len(c2)))]
+    for i, e in enumerate(c1):
+        p[i] += e
+    for i, e in enumerate(c2):
+        p[i] += e
+    return polyclr(p)
 
 
 def polysub(c1, c2):
-    return [c1[i] - c2[i] for i in range(len(c1))]
+    p = [Fp(0) for _ in range(max(len(c1), len(c2)))]
+    for i, e in enumerate(c1):
+        p[i] += e
+    for i, e in enumerate(c2):
+        p[i] -= e
+    return polyclr(p)
 
 
 def polymul(c1, c2):
     p = [Fp(0) for _ in range(len(c1) + len(c2) - 1)]
     for i in range(len(c1)):
         for j in range(len(c2)):
-            p[i+j] = p[i+j] + c1[i] * c2[j]
-    return p
+            p[i+j] += c1[i] * c2[j]
+    return polyclr(p)
 
 
 def polydivmod(c1, c2):
@@ -51,10 +75,12 @@ def polydivmod(c1, c2):
     # The code implementation is inspired by numpy.polynomial.polynomial.polydiv
     lc1 = len(c1)
     lc2 = len(c2)
+    if c2[-1] == Fp(0):
+        raise ZeroDivisionError()
     if lc1 < lc2:
-        return [], c1
+        return [Fp(0)], c1
     if lc2 == 1:
-        return [e / c2[0] for e in c1], []
+        return [e / c2[0] for e in c1], [Fp(0)]
     dif = lc1 - lc2
     scl = c2[-1]
     nc1 = c1.copy()
@@ -66,7 +92,7 @@ def polydivmod(c1, c2):
             nc1[i+k] -= nc2[k]*nc1[j]
         i -= 1
         j -= 1
-    return [e/scl for e in nc1[j+1:]], nc1[:j+1]
+    return [e/scl for e in nc1[j+1:]], polyclr(nc1[:j+1])
 
 
 def polydiv(c1, c2):
@@ -75,6 +101,16 @@ def polydiv(c1, c2):
 
 def polymod(c1, c2):
     return polydivmod(c1, c2)[1]
+
+
+def polyinv(c1, c2):
+    newt, t = [Fp(1)], [Fp(0)]
+    newr, r = c1, c2
+    while polydeg(newr):
+        quotient = polydiv(r, newr)
+        r, newr = newr, polysub(r, polymul(newr, quotient))
+        t, newt = newt, polysub(t, polymul(newt, quotient))
+    return [e/newr[0] for e in newt[:polydeg(c2)]]
 
 
 class Fp2:
@@ -98,7 +134,20 @@ class Fp2:
         return Fp2(polymod(polymul(self.coeffs, other.coeffs), self.mod))
 
     def __truediv__(self, other):
-        return Fp2(polydiv(self.coeffs, other.coeffs))
+        return self * Fp2(polyinv(other.coeffs, self.mod))
+
+    def __pow__(self, other):
+        if other == 0:
+            return Fp2([Fp(1), Fp(0)])
+        elif other == 1:
+            return Fp2(self.coeffs)
+        elif other % 2 == 0:
+            return (self * self) ** (other // 2)
+        else:
+            return ((self * self) ** int(other // 2)) * self
+
+    def __neg__(self):
+        return Fp2([-c for c in self.coeffs])
 
 
 a = Fp2([Fp(3), Fp(0)])
@@ -109,18 +158,5 @@ assert a - b == Fp2([Fp(0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c
 assert a * b == Fp2([Fp(27), Fp(3)])
 assert a / b == Fp2([Fp(0x2b149d40ceb8aaae81be18991be06ac3b5b4c5e559dbefa33267e6dc24a138e5),
                      Fp(0x009713b03af0fed4cd2cafadeed8fdf4a74fa084e52d1852e4a2bd0685c315d2)])
-
-# def polyinv(a, p):
-#     # https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Simple algebraic field extensions
-#     t = [Fp(0) for _ in a];     newt = [Fp(1)] + [Fp(0) for _ in a[:-1]]
-#     r = p.copy();  newr = a
-
-#     while newr != [Fp(0) for _ in a]:
-#         quotient = polydiv(r, newr)
-#         r, newr = newr, polysub(r, polymul(quotient, newr))
-#         t, newt = newt, polysub(t, polymul(quotient, newt))
-#     # if degree(r) > 0:
-#     #     return "Either p is not irreducible or a is a multiple of p"
-#     return polymul(polydiv([Fp(1)] + [Fp(0) for _ in a[:-1]], r), t)
-
-# print(polyinv(b.coeffs, [Fp(1), Fp(0), Fp(1)]))
+assert b ** 42 == Fp2([Fp(0x30644e72e131a029b85045b68181585aa4fe1cf011e7db175f2a2d79e17cfd47),
+                       Fp(0x30644e72e131a029b85045b6818158302983bf245a26e5c61975a0d46d9cfd47)])
