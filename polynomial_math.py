@@ -19,10 +19,12 @@ def polydivmod(c1, c2):
     # The code implementation is inspired by numpy.polynomial.polynomial.polydiv
     lc1 = len(c1)
     lc2 = len(c2)
+    if c2[-1] == 0:
+        raise ZeroDivisionError()
     if lc1 < lc2:
-        return [], c1
+        return [0], c1
     if lc2 == 1:
-        return [e / c2[0] for e in c1], []
+        return [e / c2[0] for e in c1], [0]
     dif = lc1 - lc2
     scl = c2[-1]
     nc1 = c1.copy()
