@@ -16,7 +16,7 @@ def polymul(c1, c2):
 
 def polydivmod(c1, c2):
     # Algorithm: https://en.wikipedia.org/wiki/Polynomial_long_division
-    # The code implementation is inspired by numpy.polynomial.polynomial.polyadd
+    # The code implementation is inspired by numpy.polynomial.polynomial.polydiv
     lc1 = len(c1)
     lc2 = len(c2)
     if lc1 < lc2:
@@ -34,7 +34,7 @@ def polydivmod(c1, c2):
             nc1[i+k] -= nc2[k]*nc1[j]
         i -= 1
         j -= 1
-    return [i/scl for i in nc1[j+1:]], nc1[:j+1]
+    return [e/scl for e in nc1[j+1:]], nc1[:j+1]
 
 
 def polydiv(c1, c2):
