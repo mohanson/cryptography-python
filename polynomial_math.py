@@ -79,7 +79,7 @@ def polyinv(c1, c2):
         quotient = polydiv(r, newr)
         r, newr = newr, polysub(r, polymul(newr, quotient))
         t, newt = newt, polysub(t, polymul(newt, quotient))
-    return [e/newr[0] for e in newt[:polydeg(c2)]]
+    return polyclr([e/newr[0] for e in newt[:polydeg(c2)]])
 
 
 px = [4, -2, 5]

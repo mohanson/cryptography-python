@@ -1,5 +1,6 @@
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
 
+
 class Fg:
     # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
     # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
@@ -128,81 +129,59 @@ def polyinv(c1, c2):
         quotient = polydiv(r, newr)
         r, newr = newr, polysub(r, polymul(newr, quotient))
         t, newt = newt, polysub(t, polymul(newt, quotient))
-    return [e/newr[0] for e in newt[:polydeg(c2)]]
+    return polyclr([e/newr[0] for e in newt[:polydeg(c2)]])
 
 
-class Fp2:
+class Fpx:
+    # A class for elements in polynomial extension fields
+
+    degree = 0
+    p = []
+
     def __init__(self, coeffs):
+        assert len(coeffs) == self.degree
         self.coeffs = coeffs
-        self.mod = [Fp(1), Fp(0), Fp(1)]
 
     def __repr__(self):
-        return f'Fp2({self.coeffs})'
+        return f'Fpx({self.coeffs})'
 
     def __eq__(self, other):
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return Fp2(polyadd(self.coeffs, other.coeffs))
+        return self.__class__(polyadd(self.coeffs, other.coeffs))
 
     def __sub__(self, other):
-        return Fp2(polysub(self.coeffs, other.coeffs))
+        return self.__class__(polysub(self.coeffs, other.coeffs))
 
     def __mul__(self, other):
-        return Fp2(polymod(polymul(self.coeffs, other.coeffs), self.mod))
+        return self.__class__(polymod(polymul(self.coeffs, other.coeffs), self.p))
 
     def __truediv__(self, other):
-        return self * Fp2(polyinv(other.coeffs, self.mod))
+        return self * self.__class__(polyinv(other.coeffs, self.p))
 
     def __pow__(self, other):
         if other == 0:
-            return Fp2([Fp(1), Fp(0)])
+            return self.__class__([Fp(1)] + [Fp(0) for _ in range(self.degree - 1)])
         elif other == 1:
-            return Fp2(self.coeffs)
+            return self.__class__([e for e in self.coeffs])
         elif other % 2 == 0:
             return (self * self) ** (other // 2)
         else:
-            return ((self * self) ** int(other // 2)) * self
+            return (self * self) ** (other // 2) * self
 
     def __neg__(self):
         return Fp2([-c for c in self.coeffs])
 
 
-class Fp12:
-    def __init__(self, coeffs):
-        self.coeffs = coeffs
-        self.mod = [Fp(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
+class Fp2(Fpx):
+    degree = 2
+    p = [Fp(e) for e in [1, 0, 1]]  # i² + 1 = 0
 
-    def __repr__(self):
-        return f'Fp12({self.coeffs})'
 
-    def __eq__(self, other):
-        return self.coeffs == other.coeffs
-
-    def __add__(self, other):
-        return Fp12(polyadd(self.coeffs, other.coeffs))
-
-    def __sub__(self, other):
-        return Fp12(polysub(self.coeffs, other.coeffs))
-
-    def __mul__(self, other):
-        return Fp12(polymod(polymul(self.coeffs, other.coeffs), self.mod))
-
-    def __truediv__(self, other):
-        return self * Fp12(polyinv(other.coeffs, self.mod))
-
-    def __pow__(self, other):
-        if other == 0:
-            return Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-        elif other == 1:
-            return Fp12(self.coeffs)
-        elif other % 2 == 0:
-            return (self * self) ** (other // 2)
-        else:
-            return ((self * self) ** int(other // 2)) * self
-
-    def __neg__(self):
-        return Fp12([-c for c in self.coeffs])
+class Fp12(Fpx):
+    degree = 12
+    p = [Fp(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
 a = Fp2([Fp(3), Fp(0)])
