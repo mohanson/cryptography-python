@@ -123,6 +123,7 @@ def polymod(c1, c2):
 
 
 def polyinv(c1, c2):
+    # Algorithm: https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
     newt, t = [Fp(1)], [Fp(0)]
     newr, r = c1, c2
     while polydeg(newr):
