@@ -13,5 +13,5 @@ print('polysub', r)  # 3x² + 3x + 2
 r = numpy.polynomial.polynomial.polymul(px, qx)
 print('polymul', r)  # 10x⁴ - 29x³ + 28x² - 24x + 8
 quo, rem = numpy.polynomial.polynomial.polydiv(px, qx)
-print('polydiv quo', quo)  # 2.5
-print('polydiv rem', rem)  # 10.5x - 1
+print('polyquo', quo)  # 2.5
+print('polyrem', rem)  # 10.5x - 1
