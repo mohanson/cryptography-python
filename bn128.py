@@ -1,9 +1,14 @@
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
 
+class Fg:
+    # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
+    # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
+    # division are defined and satisfy certain basic rules.
 
-class Fp:
+    p = 0
+
     def __init__(self, x):
-        self.x = x % P
+        self.x = x % self.p
 
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
@@ -12,22 +17,35 @@ class Fp:
         return self.x == other.x
 
     def __add__(self, other):
-        return Fp((self.x + other.x) % P)
+        return self.__class__((self.x + other.x) % self.p)
 
     def __sub__(self, other):
-        return Fp((self.x - other.x) % P)
+        return self.__class__((self.x - other.x) % self.p)
 
     def __mul__(self, other):
-        return Fp((self.x * other.x) % P)
+        return self.__class__((self.x * other.x) % self.p)
 
     def __truediv__(self, other):
         return self * other ** -1
 
     def __pow__(self, other):
-        return Fp(pow(self.x, other, P))
+        return self.__class__(pow(self.x, other, self.p))
 
     def __neg__(self):
-        return Fp(P - self.x)
+        return self.__class__(self.p - self.x)
+
+
+Fg.p = 23
+assert Fg(12) + Fg(20) == Fg(9)
+assert Fg(8) * Fg(9) == Fg(3)
+assert Fg(8) ** -1 == Fg(3)
+
+
+class Fp(Fg):
+    p = P
+
+    def __repr__(self):
+        return f'Fp(0x{self.x:064x})'
 
 
 def polyclr(c1):
