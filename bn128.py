@@ -236,20 +236,18 @@ def is_on_curve(pt, b):
 assert is_on_curve(G1, B)
 assert is_on_curve(G2, B2)
 
-# Elliptic curve doubling
-
 
 def double(pt):
+    # Elliptic curve doubling
     x, y = pt
     l = 3 * x**2 / (2 * y)
     newx = l**2 - 2 * x
     newy = -l * newx + l * x - y
     return newx, newy
 
-# Elliptic curve addition
-
 
 def add(p1, p2):
+    # Elliptic curve addition
     if p1 is None or p2 is None:
         return p1 if p2 is None else p2
     x1, y1 = p1
@@ -265,10 +263,9 @@ def add(p1, p2):
     assert newy == (-l * newx + l * x2 - y2)
     return (newx, newy)
 
-# Elliptic curve point multiplication
-
 
 def multiply(pt, n):
+    # Elliptic curve point multiplication
     if n == 0:
         return None
     elif n == 1:
@@ -286,8 +283,9 @@ def eq(p1, p2):
 # "Twist" a point in E(FQ2) into a point in E(FQ12)
 w = Fp12([Fp(e) for e in [0, 1] + [0] * 10])
 
-# Convert P => -P
+
 def neg(pt):
+    # Convert P => -P
     if pt is None:
         return None
     x, y = pt

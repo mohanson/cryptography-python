@@ -65,9 +65,12 @@ class Fr(Fg):
 
 
 class Ec:
+    a = Fp(A)
+    b = Fp(B)
+
     def __init__(self, x, y):
         if x != Fp(0) or y != Fp(0):
-            assert(y ** 2 == x ** 3 + Fp(A) * x + Fp(B))
+            assert y ** 2 == x ** 3 + self.a * x + self.b
         self.x = x
         self.y = y
 
@@ -87,7 +90,7 @@ class Ec:
         x1, x2 = self.x, other.x
         y1, y2 = self.y, other.y
         if self.y == other.y:
-            s = (Fp(3) * x1 * x1 + Fp(A)) / (Fp(2) * y1)
+            s = (Fp(3) * x1 * x1 + self.a) / (Fp(2) * y1)
         else:
             s = (y2 - y1) / (x2 - x1)
         x3 = s * s - x1 - x2
