@@ -150,10 +150,10 @@ class Fpx:
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return self.__class__(polyadd(self.coeffs, other.coeffs))
+        return self.__class__([x + y for x, y in zip(self.coeffs, other.coeffs)])
 
     def __sub__(self, other):
-        return self.__class__(polysub(self.coeffs, other.coeffs))
+        return self.__class__([x - y for x, y in zip(self.coeffs, other.coeffs)])
 
     def __mul__(self, other):
         return self.__class__(polymod(polymul(self.coeffs, other.coeffs), self.p))
