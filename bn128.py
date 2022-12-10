@@ -171,7 +171,7 @@ class Fpx:
         return (self * self) ** (other // 2) * self
 
     def __neg__(self):
-        return Fp2([-c for c in self.coeffs])
+        return self.__class__([-c for c in self.coeffs])
 
 
 class Fp2(Fpx):
