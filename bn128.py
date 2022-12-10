@@ -63,6 +63,13 @@ def polydeg(c1):
     return d
 
 
+def polyext(c1, sz):
+    p = [Fp(0) for _ in range(sz)]
+    for i, e in enumerate(c1):
+        p[i] = e
+    return p
+
+
 def polyadd(c1, c2):
     p = [Fp(0) for _ in range(max(len(c1), len(c2)))]
     for i, e in enumerate(c1):
@@ -150,16 +157,16 @@ class Fpx:
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return self.__class__([x + y for x, y in zip(self.coeffs, other.coeffs)])
+        return self.__class__(polyext(polyadd(self.coeffs, other.coeffs), self.degree))
 
     def __sub__(self, other):
-        return self.__class__([x - y for x, y in zip(self.coeffs, other.coeffs)])
+        return self.__class__(polyext(polysub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(polymod(polymul(self.coeffs, other.coeffs), self.p))
+        return self.__class__(polyext(polymod(polymul(self.coeffs, other.coeffs), self.p), self.degree))
 
     def __truediv__(self, other):
-        return self * self.__class__(polyinv(other.coeffs, self.p))
+        return self * self.__class__(polyext(polyinv(other.coeffs, self.p), self.degree))
 
     def __pow__(self, other):
         if other == 0:
