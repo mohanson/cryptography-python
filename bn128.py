@@ -164,12 +164,11 @@ class Fpx:
     def __pow__(self, other):
         if other == 0:
             return self.__class__([Fp(1)] + [Fp(0) for _ in range(self.degree - 1)])
-        elif other == 1:
+        if other == 1:
             return self.__class__([e for e in self.coeffs])
-        elif other % 2 == 0:
+        if other % 2 == 0:
             return (self * self) ** (other // 2)
-        else:
-            return (self * self) ** (other // 2) * self
+        return (self * self) ** (other // 2) * self
 
     def __neg__(self):
         return Fp2([-c for c in self.coeffs])
