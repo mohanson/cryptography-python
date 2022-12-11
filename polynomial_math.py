@@ -90,6 +90,7 @@ if __name__ == '__main__':
     assert polymul(px, qx) == [8, -24, 28, -29, 10]
     assert polydiv(px, qx) == [2.5]
     assert polymod(px, qx) == [-1, 10.5]
+    assert polysub(px, px) == [0]
     # https://en.wikipedia.org/wiki/Polynomial_long_division#Example
     assert polydiv([-4, 0, -2, 1], [-3, 1]) == [3, 1, 1]
     assert polymod([-4, 0, -2, 1], [-3, 1]) == [5]
