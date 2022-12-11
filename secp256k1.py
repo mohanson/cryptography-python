@@ -22,23 +22,23 @@ class Fg:
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
 
-    def __eq__(self, other):
-        return self.x == other.x
+    def __eq__(self, data):
+        return self.x == data.x
 
-    def __add__(self, other):
-        return self.__class__((self.x + other.x) % self.p)
+    def __add__(self, data):
+        return self.__class__((self.x + data.x) % self.p)
 
-    def __sub__(self, other):
-        return self.__class__((self.x - other.x) % self.p)
+    def __sub__(self, data):
+        return self.__class__((self.x - data.x) % self.p)
 
-    def __mul__(self, other):
-        return self.__class__((self.x * other.x) % self.p)
+    def __mul__(self, data):
+        return self.__class__((self.x * data.x) % self.p)
 
-    def __truediv__(self, other):
-        return self * other ** -1
+    def __truediv__(self, data):
+        return self * data ** -1
 
-    def __pow__(self, other):
-        return self.__class__(pow(self.x, other, self.p))
+    def __pow__(self, data):
+        return self.__class__(pow(self.x, data, self.p))
 
     def __neg__(self):
         return self.__class__(self.p - self.x)
@@ -67,9 +67,11 @@ class Fr(Fg):
 class Ec:
     a = Fp(A)
     b = Fp(B)
+    inf_x = Fp(0)
+    inf_y = Fp(0)
 
     def __init__(self, x, y):
-        if x != Fp(0) or y != Fp(0):
+        if x != self.inf_x or y != self.inf_y:
             assert y ** 2 == x ** 3 + self.a * x + self.b
         self.x = x
         self.y = y
@@ -77,20 +79,20 @@ class Ec:
     def __repr__(self):
         return f'Ec({self.x}, {self.y})'
 
-    def __eq__(self, other):
-        return self.x == other.x and self.y == other.y
+    def __eq__(self, data):
+        return self.x == data.x and self.y == data.y
 
-    def __add__(self, other):
-        if self == I:
-            return other
-        if other == I:
+    def __add__(self, data):
+        if self.x == self.inf_x and self.y == self.inf_y:
+            return data
+        if data.x == self.inf_x and data.y == self.inf_y:
             return self
-        if self.x == other.x and self.y == -other.y:
+        if self.x == data.x and self.y == -data.y:
             return I
-        x1, x2 = self.x, other.x
-        y1, y2 = self.y, other.y
-        if self.y == other.y:
-            s = (Fp(3) * x1 * x1 + self.a) / (Fp(2) * y1)
+        x1, x2 = self.x, data.x
+        y1, y2 = self.y, data.y
+        if self.y == data.y:
+            s = (x1 * x1 + x1 * x1 + x1 * x1 + self.a) / (y1 + y1)
         else:
             s = (y2 - y1) / (x2 - x1)
         x3 = s * s - x1 - x2
