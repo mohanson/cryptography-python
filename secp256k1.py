@@ -107,6 +107,8 @@ class Ec:
         return Ec(x3, y3)
 
     def __mul__(self, k):
+        # Point multiplication: Double-and-add
+        # https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         n = k.x
         result = I
         addend = self
