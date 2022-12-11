@@ -13,6 +13,10 @@ class Fg:
     # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
     # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
     # division are defined and satisfy certain basic rules.
+    #
+    # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+    # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+    # 3.1 The Finite Field Fp
 
     p = 0
 
@@ -83,6 +87,9 @@ class Ec:
         return self.x == data.x and self.y == data.y
 
     def __add__(self, data):
+        # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+        # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+        # 4.1 Elliptic Curves Over Fp
         if self.x == self.inf_x and self.y == self.inf_y:
             return data
         if data.x == self.inf_x and data.y == self.inf_y:
