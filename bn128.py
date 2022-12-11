@@ -1,52 +1,24 @@
+import secp256k1
+
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
+N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+
+assert pow(2, N, N) == 2
+assert (P ** 12 - 1) % N == 0
 
 
-class Fg:
-    # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
-    # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
-    # division are defined and satisfy certain basic rules.
-
-    p = 0
-
-    def __init__(self, x):
-        self.x = x % self.p
-
-    def __repr__(self):
-        return f'Fp(0x{self.x:064x})'
-
-    def __eq__(self, other):
-        return self.x == other.x
-
-    def __add__(self, other):
-        return self.__class__((self.x + other.x) % self.p)
-
-    def __sub__(self, other):
-        return self.__class__((self.x - other.x) % self.p)
-
-    def __mul__(self, other):
-        return self.__class__((self.x * other.x) % self.p)
-
-    def __truediv__(self, other):
-        return self * other ** -1
-
-    def __pow__(self, other):
-        return self.__class__(pow(self.x, other, self.p))
-
-    def __neg__(self):
-        return self.__class__(self.p - self.x)
-
-
-Fg.p = 23
-assert Fg(12) + Fg(20) == Fg(9)
-assert Fg(8) * Fg(9) == Fg(3)
-assert Fg(8) ** -1 == Fg(3)
-
-
-class Fp(Fg):
+class Fp(secp256k1.Fg):
     p = P
 
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
+
+
+class Fr(secp256k1.Fg):
+    p = N
+
+    def __repr__(self):
+        return f'Fr(0x{self.x:064x})'
 
 
 def polyclr(c1):
@@ -191,26 +163,12 @@ class Fp12(Fpx):
     p = [Fp(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-N = 21888242871839275222246405745257275088548364400416034343698204186575808495617
-
-# Curve order should be prime
-assert pow(2, N, N) == 2
-# Curve order should be a factor of P**12 - 1
-assert (P ** 12 - 1) % N == 0
-
 # Curve is y**2 = x**3 + 3
 B = Fp(3)
 # Twisted curve over FQ**2
 B2 = Fp2([Fp(3), Fp(0)]) / Fp2([Fp(9), Fp(1)])
 # Extension curve over FQ**12; same b value as over FQ
 B12 = Fp12([Fp(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-
-
-class Fr(Fg):
-    p = N
-
-    def __repr__(self):
-        return f'Fr(0x{self.x:064x})'
 
 
 # Generator for curve over FQ
