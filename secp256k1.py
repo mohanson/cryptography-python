@@ -4,9 +4,9 @@ G_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
 G_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
 A = 0
 B = 7
-assert(A < P)
-assert(B < P)
-assert((4 * A**3 + 27 * B**2) % P != 0)
+assert A < P
+assert B < P
+assert (4 * A**3 + 27 * B**2) % P != 0
 
 
 class Fg:
