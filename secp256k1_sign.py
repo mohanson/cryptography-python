@@ -1,6 +1,10 @@
 import random
 import secp256k1
 
+# https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+# Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+# 7 ECDSA Signature Generation and Verification
+
 prikey = secp256k1.Fr(0x5f6717883bef25f45a129c11fcac1567d74bda5a9ad4cbffc8203c0da2a1473c)
 pubkey = secp256k1.G * prikey
 
