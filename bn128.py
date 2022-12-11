@@ -1,3 +1,4 @@
+import polynomial_math
 import secp256k1
 
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
@@ -21,95 +22,9 @@ class Fr(secp256k1.Fg):
         return f'Fr(0x{self.x:064x})'
 
 
-def polyclr(c1):
-    for i in range(len(c1) - 1, -1, -1):
-        if c1[i] != Fp(0):
-            break
-    return c1[:i+1]
-
-
-def polydeg(c1):
-    d = len(c1) - 1
-    while c1[d] == Fp(0) and d:
-        d -= 1
-    return d
-
-
-def polyext(c1, sz):
-    p = [Fp(0) for _ in range(sz)]
-    for i, e in enumerate(c1):
-        p[i] = e
-    return p
-
-
-def polyadd(c1, c2):
-    p = [Fp(0) for _ in range(max(len(c1), len(c2)))]
-    for i, e in enumerate(c1):
-        p[i] += e
-    for i, e in enumerate(c2):
-        p[i] += e
-    return polyclr(p)
-
-
-def polysub(c1, c2):
-    p = [Fp(0) for _ in range(max(len(c1), len(c2)))]
-    for i, e in enumerate(c1):
-        p[i] += e
-    for i, e in enumerate(c2):
-        p[i] -= e
-    return polyclr(p)
-
-
-def polymul(c1, c2):
-    p = [Fp(0) for _ in range(len(c1) + len(c2) - 1)]
-    for i in range(len(c1)):
-        for j in range(len(c2)):
-            p[i+j] += c1[i] * c2[j]
-    return polyclr(p)
-
-
-def polydivmod(c1, c2):
-    # Algorithm: https://en.wikipedia.org/wiki/Polynomial_long_division
-    # The code implementation is inspired by numpy.polynomial.polynomial.polydiv
-    lc1 = len(c1)
-    lc2 = len(c2)
-    if c2[-1] == Fp(0):
-        raise ZeroDivisionError()
-    if lc1 < lc2:
-        return [Fp(0)], c1
-    if lc2 == 1:
-        return [e / c2[0] for e in c1], [Fp(0)]
-    dif = lc1 - lc2
-    scl = c2[-1]
-    nc1 = c1.copy()
-    nc2 = [e/scl for e in c2[:-1]]
-    i = dif
-    j = lc1 - 1
-    while i >= 0:
-        for k in range(lc2 - 1):
-            nc1[i+k] -= nc2[k]*nc1[j]
-        i -= 1
-        j -= 1
-    return [e/scl for e in nc1[j+1:]], polyclr(nc1[:j+1])
-
-
-def polydiv(c1, c2):
-    return polydivmod(c1, c2)[0]
-
-
-def polymod(c1, c2):
-    return polydivmod(c1, c2)[1]
-
-
-def polyinv(c1, c2):
-    # Algorithm: https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
-    newt, t = [Fp(1)], [Fp(0)]
-    newr, r = c1, c2
-    while polydeg(newr):
-        quotient = polydiv(r, newr)
-        r, newr = newr, polysub(r, polymul(newr, quotient))
-        t, newt = newt, polysub(t, polymul(newt, quotient))
-    return polyclr([e/newr[0] for e in newt[:polydeg(c2)]])
+class Pc(polynomial_math.PolynomialCalculator):
+    nil = Fp(0)
+    one = Fp(1)
 
 
 class Fpx:
@@ -117,6 +32,8 @@ class Fpx:
 
     degree = 0
     p = []
+    nil = Fp(0)
+    one = Fp(1)
 
     def __init__(self, coeffs):
         assert len(coeffs) == self.degree
@@ -129,20 +46,20 @@ class Fpx:
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return self.__class__(polyext(polyadd(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(Pc.ext(Pc.add(self.coeffs, other.coeffs), self.degree))
 
     def __sub__(self, other):
-        return self.__class__(polyext(polysub(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(Pc.ext(Pc.sub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(polyext(polymod(polymul(self.coeffs, other.coeffs), self.p), self.degree))
+        return self.__class__(Pc.ext(Pc.rem(Pc.mul(self.coeffs, other.coeffs), self.p), self.degree))
 
     def __truediv__(self, other):
-        return self * self.__class__(polyext(polyinv(other.coeffs, self.p), self.degree))
+        return self * self.__class__(Pc.ext(Pc.inv(other.coeffs, self.p), self.degree))
 
     def __pow__(self, other):
         if other == 0:
-            return self.__class__([Fp(1)] + [Fp(0) for _ in range(self.degree - 1)])
+            return self.__class__([self.one] + [self.nil for _ in range(self.degree - 1)])
         if other == 1:
             return self.__class__([e for e in self.coeffs])
         if other % 2 == 0:
