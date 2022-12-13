@@ -104,7 +104,7 @@ class Ec:
             s = (y2 - y1) / (x2 - x1)
         x3 = s * s - x1 - x2
         y3 = s * (x1 - x3) - y1
-        return Ec(x3, y3)
+        return self.__class__(x3, y3)
 
     def __mul__(self, k):
         # Point multiplication: Double-and-add
@@ -119,6 +119,9 @@ class Ec:
             addend = addend + addend
             n = n >> 1
         return result
+
+    def __neg__(self):
+        return self.__class__(self.x, -self.y)
 
 
 # Identity element

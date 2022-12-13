@@ -88,7 +88,7 @@ class PolynomialCalculator:
         newt, t = [cls.one], [cls.nil]
         newr, r = c1, c2
         while cls.deg(newr):
-            quotient = cls.div(r, newr)
+            quotient = cls.div(r, cls.clr(newr))
             r, newr = newr, cls.sub(r, cls.mul(newr, quotient))
             t, newt = newt, cls.sub(t, cls.mul(newt, quotient))
         return cls.clr([e/newr[0] for e in newt[:cls.deg(c2)]])
