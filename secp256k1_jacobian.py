@@ -1,5 +1,7 @@
 import secp256k1
 
+# 熠智科技, 椭圆曲线科普, https://download.yeez.tech/doc/ECcurve.pdf, 3.4 Projective Space
+# https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
 
 class EcJacobian:
     def __init__(self, x, y, z):
@@ -20,11 +22,11 @@ class EcJacobian:
         else:
             return secp256k1.Ec(self.x / self.z, self.y / self.z)
 
-    def __add__(self, other):
+    def __add__(self, data):
         x1, y1, z1 = self.x, self.y, self.z
-        x2, y2, z2 = other.x, other.y, other.z
+        x2, y2, z2 = data.x, data.y, data.z
         if z1 == secp256k1.Fp(0):
-            return other
+            return data
         if z2 == secp256k1.Fp(0):
             return self
         u1 = y2 * z1
