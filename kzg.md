@@ -70,18 +70,18 @@ print(h(x,y,2))
 
 G: generate point
 
-f(x) * G = ai(xi * G) 先算 G1 和 xi 次方的结果
+f(x) * G = ∑aᵢ⋅xⁱ⋅G, 先算 G1 和 xⁱ 的结果
 
 ## Polynomial commitment with trusted setup
 
 Now we have secret s belong to Fq, such that
 
 - Nobody knows s (private key of the "god")
-- [si]G1, i=1, ... is known to every body("god" public key)
+- sⁱ⋅G1, i=1, ... is known to every body("god" public key)
 
 Then we have the commitment as
 
-C = [f(s)]1 = sum(ai * si * G) 不知道 s 和 f(s), 但知道在椭圆曲线上的值
+C = [f(s)]⋅G1 = ∑aᵢ⋅sⁱ⋅G, 我们不知道 s 和 f(s) 的值是什么, 但知道其在椭圆曲线上的值
 
 finding another g(x) such that g(s) = f(s) is almost impossible.
 
@@ -89,18 +89,18 @@ ai 是原信息.
 
 ## Single proof
 
-Given xi, yi, want to prove f(xi) = yi.
+Given xᵢ, yᵢ, want to prove f(xᵢ) = yᵢ.
 
-f(x) - yi = q(x)(x-xi)
+f(x) - yᵢ = (x - xᵢ)q(x)
 
--> [f(s) - yi] * G1 = [(s-xi)q(s)]G1
--> C - [yi]*G1 =
+-> [f(s) - yᵢ] ⋅ G1 = (s - xᵢ)⋅q(s)⋅G1
+-> C - yᵢ⋅G1 = ?
 
 e: G1 x G2 -> GT
 
-e(C - [yi]*G1, G2) = e([q(s)]xG1, [(s - xi)] x G2)
+e(C - yᵢ⋅G1, G2) = e(q(s)⋅G1, (s - xᵢ)⋅G2)
 
-where [q(s)]*G1 is the proof (48 bytes as a point on an elliptic curve)
+where q(s)⋅G1 is the proof (48 bytes as a point on an elliptic curve)
 
 ## 参考
 

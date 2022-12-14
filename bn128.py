@@ -202,19 +202,19 @@ def pairing(Q, P):
     # Pairing computation
     return miller_loop(Q.twist(), cast_point_to_fq12(P))
 
-
-p1 = pairing(G2, G1)
-pn1 = pairing(G2, -G1)
-assert p1 * pn1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-np1 = pairing(-G2, G1)
-assert p1 * np1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-assert pn1 == np1
-assert p1 ** N == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-p2 = pairing(G2, G1 * Fr(2))
-assert p1 * p1 == p2
-assert p1 != p2 and p1 != np1 and p2 != np1
-po2 = pairing(G2 * Fr(2), G1)
-assert p1 * p1 == po2
-p3 = pairing(G2 * Fr(27), G1 * Fr(37))
-po3 = pairing(G2, G1 * Fr(999))
-assert p3 == po3
+if __name__ == '__main__':
+    p1 = pairing(G2, G1)
+    pn1 = pairing(G2, -G1)
+    assert p1 * pn1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    np1 = pairing(-G2, G1)
+    assert p1 * np1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert pn1 == np1
+    assert p1 ** N == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    p2 = pairing(G2, G1 * Fr(2))
+    assert p1 * p1 == p2
+    assert p1 != p2 and p1 != np1 and p2 != np1
+    po2 = pairing(G2 * Fr(2), G1)
+    assert p1 * p1 == po2
+    p3 = pairing(G2 * Fr(27), G1 * Fr(37))
+    po3 = pairing(G2, G1 * Fr(999))
+    assert p3 == po3

@@ -95,7 +95,7 @@ class Ec:
         if data.x == self.inf_x and data.y == self.inf_y:
             return self
         if self.x == data.x and self.y == -data.y:
-            return I
+            return self.__class__(self.inf_x, self.inf_y)
         x1, x2 = self.x, data.x
         y1, y2 = self.y, data.y
         if self.y == data.y:
@@ -106,11 +106,14 @@ class Ec:
         y3 = s * (x1 - x3) - y1
         return self.__class__(x3, y3)
 
+    def __sub__(self, data):
+        return self + data.__neg__()
+
     def __mul__(self, k):
         # Point multiplication: Double-and-add
         # https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
         n = k.x
-        result = I
+        result = self.__class__(self.inf_x, self.inf_y)
         addend = self
         while n:
             b = n & 1
