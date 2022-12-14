@@ -54,11 +54,11 @@ assert Fg(8) * Fg(9) == Fg(3)
 assert Fg(8) ** -1 == Fg(3)
 
 
-class Fp(Fg):
+class Fq(Fg):
     p = P
 
     def __repr__(self):
-        return f'Fp(0x{self.x:064x})'
+        return f'Fq(0x{self.x:064x})'
 
 
 class Fr(Fg):
@@ -69,10 +69,10 @@ class Fr(Fg):
 
 
 class Ec:
-    a = Fp(A)
-    b = Fp(B)
-    inf_x = Fp(0)
-    inf_y = Fp(0)
+    a = Fq(A)
+    b = Fq(B)
+    inf_x = Fq(0)
+    inf_y = Fq(0)
 
     def __init__(self, x, y):
         if x != self.inf_x or y != self.inf_y:
@@ -128,6 +128,6 @@ class Ec:
 
 
 # Identity element
-I = Ec(Fp(0x0), Fp(0x0))
+I = Ec(Fq(0x0), Fq(0x0))
 # Generator point
-G = Ec(Fp(G_X), Fp(G_Y))
+G = Ec(Fq(G_X), Fq(G_Y))

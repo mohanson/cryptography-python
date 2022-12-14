@@ -1,8 +1,8 @@
 import bn128
 import lagrange
 
-lagrange.Fp = bn128.Fp
-Fp = lagrange.Fp
+lagrange.Fq = bn128.Fq
+Fq = lagrange.Fq
 Fr = bn128.Fr
 lagrange.Foly.nil = Fr(0)
 lagrange.Foly.one = Fr(1)
@@ -23,7 +23,7 @@ def f(x):
 
 
 secvec = [bn128.G1 * (secret**i) for i in range(len(x))]
-commit = bn128.Ec(Fp(0), Fp(0))
+commit = bn128.Ec(Fq(0), Fq(0))
 for i in range(len(secvec)):
     commit += (secvec[i] * coeffs[i])
 print('commit:', commit)

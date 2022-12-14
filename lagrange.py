@@ -25,13 +25,13 @@ ret = lagrange(x, y)
 assert ret == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
 
 
-class Fp(secp256k1.Fp):
+class Fq(secp256k1.Fq):
     p = 13
 
 
 class Foly(poly):
-    nil = Fp(0)
-    one = Fp(1)
+    nil = Fq(0)
+    one = Fq(1)
 
 
 def lagrange_foly(x, w):
@@ -49,4 +49,4 @@ def lagrange_foly(x, w):
     return p
 
 
-assert lagrange_foly([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]  # 3x + 3
+assert lagrange_foly([Fq(1), Fq(4)], [Fq(6), Fq(2)]) == [Fq(3), Fq(3)]  # 3x + 3

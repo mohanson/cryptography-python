@@ -12,12 +12,12 @@ class EcJacobian:
     @classmethod
     def encode(cls, ec):
         if ec == secp256k1.I:
-            return EcJacobian(secp256k1.Fp(0), secp256k1.Fp(1), secp256k1.Fp(0))
+            return EcJacobian(secp256k1.Fq(0), secp256k1.Fq(1), secp256k1.Fq(0))
         else:
-            return EcJacobian(ec.x, ec.y, secp256k1.Fp(1))
+            return EcJacobian(ec.x, ec.y, secp256k1.Fq(1))
 
     def decode(self):
-        if self.z == secp256k1.Fp(0):
+        if self.z == secp256k1.Fq(0):
             return secp256k1.I
         else:
             return secp256k1.Ec(self.x / self.z, self.y / self.z)
@@ -25,9 +25,9 @@ class EcJacobian:
     def __add__(self, data):
         x1, y1, z1 = self.x, self.y, self.z
         x2, y2, z2 = data.x, data.y, data.z
-        if z1 == secp256k1.Fp(0):
+        if z1 == secp256k1.Fq(0):
             return data
-        if z2 == secp256k1.Fp(0):
+        if z2 == secp256k1.Fq(0):
             return self
         u1 = y2 * z1
         u2 = y1 * z2
@@ -37,18 +37,18 @@ class EcJacobian:
             if u1 != u2:
                 return EcJacobian.encode(secp256k1.I)
             else:
-                t = secp256k1.Fp(secp256k1.A) * z1 * z1 + secp256k1.Fp(3) * x1 * x1
+                t = secp256k1.Fq(secp256k1.A) * z1 * z1 + secp256k1.Fq(3) * x1 * x1
                 u = y1 * z1
                 v = u * x1 * y1
-                w = t * t - secp256k1.Fp(8) * v
-                x3 = secp256k1.Fp(2) * u * w
-                y3 = t * (secp256k1.Fp(4) * v - w) - secp256k1.Fp(8) * y1 * y1 * u * u
-                z3 = secp256k1.Fp(8) * u * u * u
+                w = t * t - secp256k1.Fq(8) * v
+                x3 = secp256k1.Fq(2) * u * w
+                y3 = t * (secp256k1.Fq(4) * v - w) - secp256k1.Fq(8) * y1 * y1 * u * u
+                z3 = secp256k1.Fq(8) * u * u * u
                 return EcJacobian(x3, y3, z3)
         else:
             u = u1 - u2
             v = v1 - v2
-            w = u * u * z1 * z2 - v * v * v - secp256k1.Fp(2) * v * v * x1 * z2
+            w = u * u * z1 * z2 - v * v * v - secp256k1.Fq(2) * v * v * x1 * z2
             x3 = v * w
             y3 = u * (v * v * x1 * z2 - w) - v * v * v * y1 * z2
             z3 = v * v * v * z1 * z2
