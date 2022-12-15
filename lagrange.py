@@ -26,7 +26,9 @@ assert ret == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
 
 
 class Fq(secp256k1.Fp):
-    p = 13
+
+    def __init__(self, x):
+        super(Fq, self).__init__(13, x)
 
 
 class Foly(poly):

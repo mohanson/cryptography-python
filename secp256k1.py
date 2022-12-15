@@ -1,14 +1,3 @@
-P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
-N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
-G_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
-G_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
-A = 0
-B = 7
-assert A < P
-assert B < P
-assert (4 * A**3 + 27 * B**2) % P != 0
-
-
 class Fp:
     # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
     # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
@@ -18,54 +7,74 @@ class Fp:
     # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
     # 3.1 The Finite Field Fp
 
-    p = 0
-
-    def __init__(self, x):
+    def __init__(self, p, x):
+        self.p = p
         self.x = x % self.p
 
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
 
     def __eq__(self, data):
+        assert self.p == data.p
         return self.x == data.x
 
     def __add__(self, data):
-        return self.__class__((self.x + data.x) % self.p)
+        assert self.p == data.p
+        return Fp(self.p, (self.x + data.x) % self.p)
 
     def __sub__(self, data):
-        return self.__class__((self.x - data.x) % self.p)
+        assert self.p == data.p
+        return Fp(self.p, (self.x - data.x) % self.p)
 
     def __mul__(self, data):
-        return self.__class__((self.x * data.x) % self.p)
+        assert self.p == data.p
+        return Fp(self.p, (self.x * data.x) % self.p)
 
     def __truediv__(self, data):
+        assert self.p == data.p
         return self * data ** -1
 
     def __pow__(self, data):
-        return self.__class__(pow(self.x, data, self.p))
+        return Fp(self.p, pow(self.x, data, self.p))
 
     def __neg__(self):
-        return self.__class__(self.p - self.x)
+        return Fp(self.p, self.p - self.x)
 
 
-Fp.p = 23
-assert Fp(12) + Fp(20) == Fp(9)
-assert Fp(8) * Fp(9) == Fp(3)
-assert Fp(8) ** -1 == Fp(3)
+if __name__ == '__main__':
+    assert Fp(23, 12) + Fp(23, 20) == Fp(23, 9)
+    assert Fp(23, 8) * Fp(23, 9) == Fp(23, 3)
+    assert Fp(23, 8) ** -1 == Fp(23, 3)
+
+P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f
+N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
 
 
 class Fq(Fp):
-    p = P
+
+    def __init__(self, x):
+        super(Fq, self).__init__(P, x)
 
     def __repr__(self):
         return f'Fq(0x{self.x:064x})'
 
 
 class Fr(Fp):
-    p = N
+
+    def __init__(self, x):
+        super(Fr, self).__init__(N, x)
 
     def __repr__(self):
         return f'Fr(0x{self.x:064x})'
+
+
+G_X = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+G_Y = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+A = 0
+B = 7
+assert A < P
+assert B < P
+assert (4 * A**3 + 27 * B**2) % P != 0
 
 
 class Ec:
