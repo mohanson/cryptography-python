@@ -38,7 +38,7 @@ class PointJacobian:
             if u1 != u2:
                 return PointJacobian.encode(secp256k1.I)
             else:
-                t = secp256k1.Fq(secp256k1.A) * z1 * z1 + secp256k1.Fq(3) * x1 * x1
+                t = secp256k1.A * z1 * z1 + secp256k1.Fq(3) * x1 * x1
                 u = y1 * z1
                 v = u * x1 * y1
                 w = t * t - secp256k1.Fq(8) * v
