@@ -78,6 +78,12 @@ class Fr(Fp):
         return f'Fr(0x{self.x:064x})'
 
 
+if __name__ == '__main__':
+    Fp.p = 13
+    assert polynomial.interp([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
+    Fp.p = 0
+
+
 class Fqx:
     # A class for elements in polynomial extension fields
 

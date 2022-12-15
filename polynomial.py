@@ -118,8 +118,3 @@ if __name__ == '__main__':
     assert rem([-4, 0, -2, 1], [-3, 1]) == [5]
     assert rem(mul(inv(c1, c2), c1), c2)[0] == 1
     assert interp([1,  2,  3,  4], [4, 15, 40, 85]) == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
-    import secp256k1
-    Fp = secp256k1.Fp
-    Fp.p = 13
-    assert interp([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
-    Fp.p = 0
