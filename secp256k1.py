@@ -9,7 +9,7 @@ assert B < P
 assert (4 * A**3 + 27 * B**2) % P != 0
 
 
-class Fg:
+class Fp:
     # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
     # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
     # division are defined and satisfy certain basic rules.
@@ -48,20 +48,20 @@ class Fg:
         return self.__class__(self.p - self.x)
 
 
-Fg.p = 23
-assert Fg(12) + Fg(20) == Fg(9)
-assert Fg(8) * Fg(9) == Fg(3)
-assert Fg(8) ** -1 == Fg(3)
+Fp.p = 23
+assert Fp(12) + Fp(20) == Fp(9)
+assert Fp(8) * Fp(9) == Fp(3)
+assert Fp(8) ** -1 == Fp(3)
 
 
-class Fq(Fg):
+class Fq(Fp):
     p = P
 
     def __repr__(self):
         return f'Fq(0x{self.x:064x})'
 
 
-class Fr(Fg):
+class Fr(Fp):
     p = N
 
     def __repr__(self):

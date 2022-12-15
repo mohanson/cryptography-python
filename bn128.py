@@ -11,14 +11,14 @@ assert pow(2, N, N) == 2
 assert (P ** 12 - 1) % N == 0
 
 
-class Fq(secp256k1.Fg):
+class Fq(secp256k1.Fp):
     p = P
 
     def __repr__(self):
         return f'Fq(0x{self.x:064x})'
 
 
-class Fr(secp256k1.Fg):
+class Fr(secp256k1.Fp):
     p = N
 
     def __repr__(self):

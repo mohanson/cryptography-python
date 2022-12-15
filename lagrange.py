@@ -25,7 +25,7 @@ ret = lagrange(x, y)
 assert ret == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
 
 
-class Fq(secp256k1.Fq):
+class Fq(secp256k1.Fp):
     p = 13
 
 

@@ -15,6 +15,7 @@ x = [Fr(e) for e in [1,  2,  3,  4]]
 y = [Fr(e) for e in [4, 15, 40, 85]]
 coeffs = lagrange.lagrange_foly(x, y)
 
+
 def f(x):
     s = Fr(0)
     for i in range(len(coeffs)):
@@ -36,6 +37,7 @@ print('commit:', commit)
 class FrPc(bn128.Pc):
     nil = Fr(0)
     one = Fr(1)
+
 
 index = 0
 coeffs_1 = [e for e in coeffs]

@@ -3,6 +3,7 @@ import secp256k1
 # 熠智科技, 椭圆曲线科普, https://download.yeez.tech/doc/ECcurve.pdf, 3.4 Projective Space
 # https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
 
+
 class EcJacobian:
     def __init__(self, x, y, z):
         self.x = x
