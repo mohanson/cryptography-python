@@ -136,14 +136,14 @@ class Fq12(Fqx):
     p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Ec(secp256k1.Ec):
+class Point(secp256k1.Point):
     a = Fq(0)
     b = Fq(3)
     inf_x = Fq(0)
     inf_y = Fq(0)
 
 
-class Ec2(secp256k1.Ec):
+class Point2(secp256k1.Point):
     a = Fq2([Fq(0), Fq(0)])
     b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
     inf_x = Fq2([Fq(0), Fq(0)])
@@ -151,7 +151,7 @@ class Ec2(secp256k1.Ec):
 
     def twist(self):
         if self.x == self.inf_x and self.y == self.inf_y:
-            return Ec12(Ec12.inf_x, Ec12.inf_y)
+            return Point12(Point12.inf_x, Point12.inf_y)
         # "Twist" a point in E(FQ2) into a point in E(FQ12)
         w = Fq12([Fq(e) for e in [0, 1] + [0] * 10])
         # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
@@ -162,18 +162,18 @@ class Ec2(secp256k1.Ec):
         nx = Fq12([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
         ny = Fq12([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
         # Divide x coord by w**2 and y coord by w**3
-        return Ec12(nx * w ** 2, ny * w**3)
+        return Point12(nx * w ** 2, ny * w**3)
 
 
-class Ec12(secp256k1.Ec):
+class Point12(secp256k1.Point):
     a = Fq12([Fq(0) for _ in range(12)])
     b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     inf_x = Fq12([Fq(0) for _ in range(12)])
     inf_y = Fq12([Fq(0) for _ in range(12)])
 
 
-G1 = Ec(Fq(1), Fq(2))
-G2 = Ec2(
+G1 = Point(Fq(1), Fq(2))
+G2 = Point2(
     Fq2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
          Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
     Fq2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
@@ -218,9 +218,9 @@ assert linefunc(one, one, negtwo) == Fq(0)
 
 def cast_point_to_fq12(pt):
     if pt.x == Fq(0) and pt.y == Fq(0):
-        return Ec12(Fq12([Fq(0) for _ in range(12)]), Fq12([Fq(0) for _ in range(12)]))
+        return Point12(Fq12([Fq(0) for _ in range(12)]), Fq12([Fq(0) for _ in range(12)]))
     x, y = pt.x, pt.y
-    return Ec12(Fq12([x] + [Fq(0)] * 11), Fq12([y] + [Fq(0)] * 11))
+    return Point12(Fq12([x] + [Fq(0)] * 11), Fq12([y] + [Fq(0)] * 11))
 
 
 ate_loop_count = 29793968203157093288
@@ -229,7 +229,7 @@ log_ate_loop_count = 63
 
 def miller_loop(q, p):
     # Main miller loop
-    if (q.x == Ec12.inf_x and q.y == Ec12.inf_y) or (p.x == Ec12.inf_x and p.y == Ec12.inf_y):
+    if (q.x == Point12.inf_x and q.y == Point12.inf_y) or (p.x == Point12.inf_x and p.y == Point12.inf_y):
         return Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     R = q
     f = Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
@@ -240,9 +240,9 @@ def miller_loop(q, p):
             f = f * linefunc(R, q, p)
             R = R + q
     # assert R == multiply(Q, ate_loop_count)
-    Q1 = Ec12(q.x ** P, q.y ** P)
+    Q1 = Point12(q.x ** P, q.y ** P)
     # assert is_on_curve(Q1, b12)
-    nQ2 = Ec12(Q1.x ** P, -Q1.y ** P)
+    nQ2 = Point12(Q1.x ** P, -Q1.y ** P)
     # assert is_on_curve(nQ2, b12)
     f = f * linefunc(R, Q1, p)
     R = R + Q1

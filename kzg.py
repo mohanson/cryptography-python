@@ -24,7 +24,7 @@ def f(x):
 
 
 secvec = [bn128.G1 * (secret**i) for i in range(len(x))]
-commit = bn128.Ec(Fq(0), Fq(0))
+commit = bn128.Point(Fq(0), Fq(0))
 for i in range(len(secvec)):
     commit += (secvec[i] * coeffs[i])
 print('commit:', commit)

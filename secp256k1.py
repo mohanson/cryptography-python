@@ -77,7 +77,7 @@ assert B < P
 assert (4 * A**3 + 27 * B**2) % P != 0
 
 
-class Ec:
+class Point:
     a = Fq(A)
     b = Fq(B)
     inf_x = Fq(0)
@@ -90,7 +90,7 @@ class Ec:
         self.y = y
 
     def __repr__(self):
-        return f'Ec({self.x}, {self.y})'
+        return f'Point({self.x}, {self.y})'
 
     def __eq__(self, data):
         return self.x == data.x and self.y == data.y
@@ -137,6 +137,6 @@ class Ec:
 
 
 # Identity element
-I = Ec(Fq(0x0), Fq(0x0))
+I = Point(Fq(0x0), Fq(0x0))
 # Generator point
-G = Ec(Fq(G_X), Fq(G_Y))
+G = Point(Fq(G_X), Fq(G_Y))
