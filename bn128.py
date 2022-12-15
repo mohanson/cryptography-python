@@ -1,4 +1,3 @@
-import secp256k1
 import polynomial
 import sys
 sys.setrecursionlimit(10000)
@@ -54,7 +53,9 @@ if __name__ == '__main__':
     assert Fp(8) ** -1 == Fp(3)
     Fp.p = 0
 
+# Prime of finite field.
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
+# The order n of G.
 N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
 assert pow(2, N, N) == 2
 assert (P ** 12 - 1) % N == 0
@@ -80,6 +81,69 @@ if __name__ == '__main__':
     Fp.p = 13
     assert polynomial.interp([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
     Fp.p = 0
+
+
+A = Fq(0)
+B = Fq(3)
+
+
+class _Point:
+    a = A
+    b = B
+    i = [Fq(0), Fq(0)]
+
+    def __init__(self, x, y):
+        if x != self.i[0] or y != self.i[1]:
+            assert y ** 2 == x ** 3 + self.a * x + self.b
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f'Point({self.x}, {self.y})'
+
+    def __eq__(self, data):
+        assert self.a == data.a and self.b == data.b
+        return self.x == data.x and self.y == data.y
+
+    def __add__(self, data):
+        # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+        # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+        # 4.1 Elliptic Curves Over Fp
+        if self.x == self.i[0] and self.y == self.i[1]:
+            return data
+        if data.x == self.i[0] and data.y == self.i[1]:
+            return self
+        if self.x == data.x and self.y == -data.y:
+            return self.__class__(self.i[0], self.i[1])
+        x1, x2 = self.x, data.x
+        y1, y2 = self.y, data.y
+        if self.y == data.y:
+            s = (x1 * x1 + x1 * x1 + x1 * x1 + self.a) / (y1 + y1)
+        else:
+            s = (y2 - y1) / (x2 - x1)
+        x3 = s * s - x1 - x2
+        y3 = s * (x1 - x3) - y1
+        return self.__class__(x3, y3)
+
+    def __sub__(self, data):
+        return self + data.__neg__()
+
+    def __mul__(self, k):
+        # Point multiplication: Double-and-add
+        # https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
+        n = k.x
+        result = self.__class__(self.i[0], self.i[1])
+        addend = self
+        while n:
+            b = n & 1
+            if b == 1:
+                result += addend
+            addend = addend + addend
+            n = n >> 1
+        return result
+
+    def __neg__(self):
+        return self.__class__(self.x, -self.y)
 
 
 class Fqx:
@@ -135,22 +199,26 @@ class Fq12(Fqx):
     p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Point(secp256k1.Point):
+class Point(_Point):
     a = Fq(0)
     b = Fq(3)
-    inf_x = Fq(0)
-    inf_y = Fq(0)
+    i = [
+        Fq(0),
+        Fq(0)
+    ]
 
 
-class Point2(secp256k1.Point):
+class Point2(_Point):
     a = Fq2([Fq(0), Fq(0)])
     b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
-    inf_x = Fq2([Fq(0), Fq(0)])
-    inf_y = Fq2([Fq(0), Fq(0)])
+    i = [
+        Fq2([Fq(0), Fq(0)]),
+        Fq2([Fq(0), Fq(0)])
+    ]
 
     def twist(self):
-        if self.x == self.inf_x and self.y == self.inf_y:
-            return Point12(Point12.inf_x, Point12.inf_y)
+        if self.x == self.i[0] and self.y == self.i[1]:
+            return Point12(Point12.i[0], Point12.i[1])
         # "Twist" a point in E(FQ2) into a point in E(FQ12)
         w = Fq12([Fq(e) for e in [0, 1] + [0] * 10])
         # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
@@ -164,11 +232,13 @@ class Point2(secp256k1.Point):
         return Point12(nx * w ** 2, ny * w**3)
 
 
-class Point12(secp256k1.Point):
+class Point12(_Point):
     a = Fq12([Fq(0) for _ in range(12)])
     b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    inf_x = Fq12([Fq(0) for _ in range(12)])
-    inf_y = Fq12([Fq(0) for _ in range(12)])
+    i = [
+        Fq12([Fq(0) for _ in range(12)]),
+        Fq12([Fq(0) for _ in range(12)])
+    ]
 
 
 G1 = Point(Fq(1), Fq(2))
@@ -228,7 +298,7 @@ log_ate_loop_count = 63
 
 def miller_loop(q, p):
     # Main miller loop
-    if (q.x == Point12.inf_x and q.y == Point12.inf_y) or (p.x == Point12.inf_x and p.y == Point12.inf_y):
+    if (q.x == Point12.i[0] and q.y == Point12.i[1]) or (p.x == Point12.i[0] and p.y == Point12.i[1]):
         return Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     R = q
     f = Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
