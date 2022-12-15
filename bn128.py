@@ -56,10 +56,8 @@ if __name__ == '__main__':
 
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
 N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
-
-if __name__ == '__main__':
-    assert pow(2, N, N) == 2
-    assert (P ** 12 - 1) % N == 0
+assert pow(2, N, N) == 2
+assert (P ** 12 - 1) % N == 0
 
 
 class Fq(Fp):
