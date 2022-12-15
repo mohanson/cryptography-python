@@ -1,5 +1,5 @@
 import secp256k1
-import polynomial_math
+import polynomial
 import sys
 sys.setrecursionlimit(10000)
 
@@ -13,8 +13,9 @@ class Fp:
     # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
     # 3.1 The Finite Field Fp
 
-    def __init__(self, p, x):
-        self.p = p
+    p = 0
+
+    def __init__(self, x):
         self.x = x % self.p
 
     def __repr__(self):
@@ -26,31 +27,32 @@ class Fp:
 
     def __add__(self, data):
         assert self.p == data.p
-        return Fp(self.p, (self.x + data.x) % self.p)
+        return self.__class__((self.x + data.x) % self.p)
 
     def __sub__(self, data):
         assert self.p == data.p
-        return Fp(self.p, (self.x - data.x) % self.p)
+        return self.__class__((self.x - data.x) % self.p)
 
     def __mul__(self, data):
         assert self.p == data.p
-        return Fp(self.p, (self.x * data.x) % self.p)
+        return self.__class__((self.x * data.x) % self.p)
 
     def __truediv__(self, data):
-        assert self.p == data.p
         return self * data ** -1
 
     def __pow__(self, data):
-        return Fp(self.p, pow(self.x, data, self.p))
+        return self.__class__(pow(self.x, data, self.p))
 
     def __neg__(self):
-        return Fp(self.p, self.p - self.x)
+        return self.__class__(self.p - self.x)
 
 
 if __name__ == '__main__':
-    assert Fp(23, 12) + Fp(23, 20) == Fp(23, 9)
-    assert Fp(23, 8) * Fp(23, 9) == Fp(23, 3)
-    assert Fp(23, 8) ** -1 == Fp(23, 3)
+    Fp.p = 23
+    assert Fp(12) + Fp(20) == Fp(9)
+    assert Fp(8) * Fp(9) == Fp(3)
+    assert Fp(8) ** -1 == Fp(3)
+    Fp.p = 0
 
 P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
 N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
@@ -62,8 +64,7 @@ if __name__ == '__main__':
 
 class Fq(Fp):
 
-    def __init__(self, x):
-        super(Fq, self).__init__(P, x)
+    p = P
 
     def __repr__(self):
         return f'Fq(0x{self.x:064x})'
@@ -71,16 +72,10 @@ class Fq(Fp):
 
 class Fr(Fp):
 
-    def __init__(self, x):
-        super(Fr, self).__init__(N, x)
+    p = N
 
     def __repr__(self):
         return f'Fr(0x{self.x:064x})'
-
-
-class Pc(polynomial_math.PolynomialCalculator):
-    nil = Fq(0)
-    one = Fq(1)
 
 
 class Fqx:
@@ -102,16 +97,16 @@ class Fqx:
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return self.__class__(Pc.ext(Pc.add(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(polynomial.ext(polynomial.add(self.coeffs, other.coeffs), self.degree))
 
     def __sub__(self, other):
-        return self.__class__(Pc.ext(Pc.sub(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(polynomial.ext(polynomial.sub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(Pc.ext(Pc.rem(Pc.mul(self.coeffs, other.coeffs), self.p), self.degree))
+        return self.__class__(polynomial.ext(polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p), self.degree))
 
     def __truediv__(self, other):
-        return self * self.__class__(Pc.ext(Pc.inv(other.coeffs, self.p), self.degree))
+        return self * self.__class__(polynomial.ext(polynomial.inv(other.coeffs, self.p), self.degree))
 
     def __pow__(self, other):
         if other == 0:
