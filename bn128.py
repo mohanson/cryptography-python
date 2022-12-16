@@ -1,64 +1,180 @@
-import secp256k1
-import polynomial_math
+import polynomial
 import sys
 sys.setrecursionlimit(10000)
 
 
-P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+class Fp:
+    # Galois field. In mathematics, a finite field or Galois field is a field that contains a finite number of elements.
+    # As with any field, a finite field is a set on which the operations of multiplication, addition, subtraction and
+    # division are defined and satisfy certain basic rules.
+    #
+    # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+    # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+    # 3.1 The Finite Field Fp
 
-assert pow(2, N, N) == 2
-assert (P ** 12 - 1) % N == 0
+    p = 0
 
-
-class Fp(secp256k1.Fg):
-    p = P
+    def __init__(self, x):
+        self.x = x % self.p
 
     def __repr__(self):
         return f'Fp(0x{self.x:064x})'
 
+    def __eq__(self, data):
+        assert self.p == data.p
+        return self.x == data.x
 
-class Fr(secp256k1.Fg):
+    def __add__(self, data):
+        assert self.p == data.p
+        return self.__class__((self.x + data.x) % self.p)
+
+    def __sub__(self, data):
+        assert self.p == data.p
+        return self.__class__((self.x - data.x) % self.p)
+
+    def __mul__(self, data):
+        assert self.p == data.p
+        return self.__class__((self.x * data.x) % self.p)
+
+    def __truediv__(self, data):
+        return self * data ** -1
+
+    def __pow__(self, data):
+        return self.__class__(pow(self.x, data, self.p))
+
+    def __neg__(self):
+        return self.__class__(self.p - self.x)
+
+
+if __name__ == '__main__':
+    Fp.p = 23
+    assert Fp(12) + Fp(20) == Fp(9)
+    assert Fp(8) * Fp(9) == Fp(3)
+    assert Fp(8) ** -1 == Fp(3)
+    Fp.p = 0
+
+# Prime of finite field.
+P = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
+# The order n of G.
+N = 0x30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f0000001
+assert pow(2, N, N) == 2
+assert (P ** 12 - 1) % N == 0
+
+
+class Fq(Fp):
+
+    p = P
+
+    def __repr__(self):
+        return f'Fq(0x{self.x:064x})'
+
+
+class Fr(Fp):
+
     p = N
 
     def __repr__(self):
         return f'Fr(0x{self.x:064x})'
 
 
-class Pc(polynomial_math.PolynomialCalculator):
-    nil = Fp(0)
-    one = Fp(1)
+if __name__ == '__main__':
+    Fp.p = 13
+    assert polynomial.interp([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
+    Fp.p = 0
 
 
-class Fpx:
+A = Fq(0)
+B = Fq(3)
+
+
+class _Point:
+    a = A
+    b = B
+    i = [Fq(0), Fq(0)]
+
+    def __init__(self, x, y):
+        if x != self.i[0] or y != self.i[1]:
+            assert y ** 2 == x ** 3 + self.a * x + self.b
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f'Point({self.x}, {self.y})'
+
+    def __eq__(self, data):
+        assert self.a == data.a and self.b == data.b
+        return self.x == data.x and self.y == data.y
+
+    def __add__(self, data):
+        # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
+        # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
+        # 4.1 Elliptic Curves Over Fp
+        if self.x == self.i[0] and self.y == self.i[1]:
+            return data
+        if data.x == self.i[0] and data.y == self.i[1]:
+            return self
+        if self.x == data.x and self.y == -data.y:
+            return self.__class__(self.i[0], self.i[1])
+        x1, x2 = self.x, data.x
+        y1, y2 = self.y, data.y
+        if self.y == data.y:
+            s = (x1 * x1 + x1 * x1 + x1 * x1 + self.a) / (y1 + y1)
+        else:
+            s = (y2 - y1) / (x2 - x1)
+        x3 = s * s - x1 - x2
+        y3 = s * (x1 - x3) - y1
+        return self.__class__(x3, y3)
+
+    def __sub__(self, data):
+        return self + data.__neg__()
+
+    def __mul__(self, k):
+        # Point multiplication: Double-and-add
+        # https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication
+        n = k.x
+        result = self.__class__(self.i[0], self.i[1])
+        addend = self
+        while n:
+            b = n & 1
+            if b == 1:
+                result += addend
+            addend = addend + addend
+            n = n >> 1
+        return result
+
+    def __neg__(self):
+        return self.__class__(self.x, -self.y)
+
+
+class Fqx:
     # A class for elements in polynomial extension fields
 
     degree = 0
     p = []
-    nil = Fp(0)
-    one = Fp(1)
+    nil = Fq(0)
+    one = Fq(1)
 
     def __init__(self, coeffs):
         assert len(coeffs) == self.degree
         self.coeffs = coeffs
 
     def __repr__(self):
-        return f'Fpx({self.coeffs})'
+        return f'Fqx({self.coeffs})'
 
     def __eq__(self, other):
         return self.coeffs == other.coeffs
 
     def __add__(self, other):
-        return self.__class__(Pc.ext(Pc.add(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(polynomial.ext(polynomial.add(self.coeffs, other.coeffs), self.degree))
 
     def __sub__(self, other):
-        return self.__class__(Pc.ext(Pc.sub(self.coeffs, other.coeffs), self.degree))
+        return self.__class__(polynomial.ext(polynomial.sub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(Pc.ext(Pc.rem(Pc.mul(self.coeffs, other.coeffs), self.p), self.degree))
+        return self.__class__(polynomial.ext(polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p), self.degree))
 
     def __truediv__(self, other):
-        return self * self.__class__(Pc.ext(Pc.inv(other.coeffs, self.p), self.degree))
+        return self * self.__class__(polynomial.ext(polynomial.inv(other.coeffs, self.p), self.degree))
 
     def __pow__(self, other):
         if other == 0:
@@ -73,58 +189,64 @@ class Fpx:
         return self.__class__([-c for c in self.coeffs])
 
 
-class Fp2(Fpx):
+class Fq2(Fqx):
     degree = 2
-    p = [Fp(e) for e in [1, 0, 1]]  # i² + 1 = 0
+    p = [Fq(e) for e in [1, 0, 1]]  # i² + 1 = 0
 
 
-class Fp12(Fpx):
+class Fq12(Fqx):
     degree = 12
-    p = [Fp(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
+    p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Ec(secp256k1.Ec):
-    a = Fp(0)
-    b = Fp(3)
-    inf_x = Fp(0)
-    inf_y = Fp(0)
+class Point(_Point):
+    a = Fq(0)
+    b = Fq(3)
+    i = [
+        Fq(0),
+        Fq(0)
+    ]
 
 
-class Ec2(secp256k1.Ec):
-    a = Fp2([Fp(0), Fp(0)])
-    b = Fp2([Fp(3), Fp(0)]) / Fp2([Fp(9), Fp(1)])
-    inf_x = Fp2([Fp(0), Fp(0)])
-    inf_y = Fp2([Fp(0), Fp(0)])
+class Point2(_Point):
+    a = Fq2([Fq(0), Fq(0)])
+    b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
+    i = [
+        Fq2([Fq(0), Fq(0)]),
+        Fq2([Fq(0), Fq(0)])
+    ]
 
     def twist(self):
-        if self.x == self.inf_x and self.y == self.inf_y:
-            return Ec12(Ec12.inf_x, Ec12.inf_y)
+        if self.x == self.i[0] and self.y == self.i[1]:
+            return Point12(Point12.i[0], Point12.i[1])
         # "Twist" a point in E(FQ2) into a point in E(FQ12)
-        w = Fp12([Fp(e) for e in [0, 1] + [0] * 10])
+        w = Fq12([Fq(e) for e in [0, 1] + [0] * 10])
         # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
-        xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fp(9), self.x.coeffs[1]]
-        ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fp(9), self.y.coeffs[1]]
+        xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fq(9), self.x.coeffs[1]]
+        ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fq(9), self.y.coeffs[1]]
         # Isomorphism into subfield of Z[p] / w**12 - 18 * w**6 + 82,
         # where w**6 = x
-        nx = Fp12([xcoeffs[0], Fp(0), Fp(0), Fp(0), Fp(0), Fp(0), xcoeffs[1], Fp(0), Fp(0), Fp(0), Fp(0), Fp(0)])
-        ny = Fp12([ycoeffs[0], Fp(0), Fp(0), Fp(0), Fp(0), Fp(0), ycoeffs[1], Fp(0), Fp(0), Fp(0), Fp(0), Fp(0)])
+        nx = Fq12([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+        ny = Fq12([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
         # Divide x coord by w**2 and y coord by w**3
-        return Ec12(nx * w ** 2, ny * w**3)
+        return Point12(nx * w ** 2, ny * w**3)
 
 
-class Ec12(secp256k1.Ec):
-    a = Fp12([Fp(0) for _ in range(12)])
-    b = Fp12([Fp(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    inf_x = Fp12([Fp(0) for _ in range(12)])
-    inf_y = Fp12([Fp(0) for _ in range(12)])
+class Point12(_Point):
+    a = Fq12([Fq(0) for _ in range(12)])
+    b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    i = [
+        Fq12([Fq(0) for _ in range(12)]),
+        Fq12([Fq(0) for _ in range(12)])
+    ]
 
 
-G1 = Ec(Fp(1), Fp(2))
-G2 = Ec2(
-    Fp2([Fp(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
-         Fp(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
-    Fp2([Fp(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
-         Fp(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
+G1 = Point(Fq(1), Fq(2))
+G2 = Point2(
+    Fq2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
+         Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
+    Fq2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
+         Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
 )
 G12 = G2.twist()
 
@@ -151,23 +273,23 @@ def linefunc(P1, P2, T):
 one, two, three = G1, G1 * Fr(2), G1 * Fr(3)
 negone, negtwo, negthree = G1 * Fr(N - 1), G1 * Fr(N - 2), G1 * Fr(N - 3)
 
-assert linefunc(one, two, one) == Fp(0)
-assert linefunc(one, two, two) == Fp(0)
-assert linefunc(one, two, three) != Fp(0)
-assert linefunc(one, two, negthree) == Fp(0)
-assert linefunc(one, negone, one) == Fp(0)
-assert linefunc(one, negone, negone) == Fp(0)
-assert linefunc(one, negone, two) != Fp(0)
-assert linefunc(one, one, one) == Fp(0)
-assert linefunc(one, one, two) != Fp(0)
-assert linefunc(one, one, negtwo) == Fp(0)
+assert linefunc(one, two, one) == Fq(0)
+assert linefunc(one, two, two) == Fq(0)
+assert linefunc(one, two, three) != Fq(0)
+assert linefunc(one, two, negthree) == Fq(0)
+assert linefunc(one, negone, one) == Fq(0)
+assert linefunc(one, negone, negone) == Fq(0)
+assert linefunc(one, negone, two) != Fq(0)
+assert linefunc(one, one, one) == Fq(0)
+assert linefunc(one, one, two) != Fq(0)
+assert linefunc(one, one, negtwo) == Fq(0)
 
 
 def cast_point_to_fq12(pt):
-    if pt.x == Fp(0) and pt.y == Fp(0):
-        return Ec12(Fp12([Fp(0) for _ in range(12)]), Fp12([Fp(0) for _ in range(12)]))
+    if pt.x == Fq(0) and pt.y == Fq(0):
+        return Point12(Fq12([Fq(0) for _ in range(12)]), Fq12([Fq(0) for _ in range(12)]))
     x, y = pt.x, pt.y
-    return Ec12(Fp12([x] + [Fp(0)] * 11), Fp12([y] + [Fp(0)] * 11))
+    return Point12(Fq12([x] + [Fq(0)] * 11), Fq12([y] + [Fq(0)] * 11))
 
 
 ate_loop_count = 29793968203157093288
@@ -176,10 +298,10 @@ log_ate_loop_count = 63
 
 def miller_loop(q, p):
     # Main miller loop
-    if (q.x == Ec12.inf_x and q.y == Ec12.inf_y) or (p.x == Ec12.inf_x and p.y == Ec12.inf_y):
-        return Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    if (q.x == Point12.i[0] and q.y == Point12.i[1]) or (p.x == Point12.i[0] and p.y == Point12.i[1]):
+        return Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     R = q
-    f = Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
+    f = Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
     for i in range(log_ate_loop_count, -1, -1):
         f = f * f * linefunc(R, R, p)
         R = R + R
@@ -187,9 +309,9 @@ def miller_loop(q, p):
             f = f * linefunc(R, q, p)
             R = R + q
     # assert R == multiply(Q, ate_loop_count)
-    Q1 = Ec12(q.x ** P, q.y ** P)
+    Q1 = Point12(q.x ** P, q.y ** P)
     # assert is_on_curve(Q1, b12)
-    nQ2 = Ec12(Q1.x ** P, -Q1.y ** P)
+    nQ2 = Point12(Q1.x ** P, -Q1.y ** P)
     # assert is_on_curve(nQ2, b12)
     f = f * linefunc(R, Q1, p)
     R = R + Q1
@@ -202,14 +324,15 @@ def pairing(Q, P):
     # Pairing computation
     return miller_loop(Q.twist(), cast_point_to_fq12(P))
 
+
 if __name__ == '__main__':
     p1 = pairing(G2, G1)
     pn1 = pairing(G2, -G1)
-    assert p1 * pn1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 * pn1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     np1 = pairing(-G2, G1)
-    assert p1 * np1 == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 * np1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     assert pn1 == np1
-    assert p1 ** N == Fp12([Fp(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 ** N == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     p2 = pairing(G2, G1 * Fr(2))
     assert p1 * p1 == p2
     assert p1 != p2 and p1 != np1 and p2 != np1
