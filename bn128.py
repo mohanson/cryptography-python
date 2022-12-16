@@ -83,14 +83,10 @@ if __name__ == '__main__':
     Fp.p = 0
 
 
-A = Fq(0)
-B = Fq(3)
-
-
-class _Point:
-    a = A
-    b = B
-    i = [Fq(0), Fq(0)]
+class Pt:
+    a = None
+    b = None
+    i = None
 
     def __init__(self, x, y):
         if x != self.i[0] or y != self.i[1]:
@@ -99,10 +95,9 @@ class _Point:
         self.y = y
 
     def __repr__(self):
-        return f'Point({self.x}, {self.y})'
+        return f'Pt({self.x}, {self.y})'
 
     def __eq__(self, data):
-        assert self.a == data.a and self.b == data.b
         return self.x == data.x and self.y == data.y
 
     def __add__(self, data):
@@ -144,6 +139,25 @@ class _Point:
 
     def __neg__(self):
         return self.__class__(self.x, -self.y)
+
+
+class Pt1(Pt):
+    a = Fq(0)
+    b = Fq(3)
+    i = [
+        Fq(0),
+        Fq(0)
+    ]
+
+
+G1 = Pt1(Fq(1), Fq(2))
+I1 = Pt1(Fq(0), Fq(0))
+
+if __name__ == '__main__':
+    assert G1 * Fr(2) + G1 + G1 == G1 * Fr(4)
+    assert G1 + G1 != G1
+    assert G1 * Fr(9) + G1 * Fr(5) == G1 * Fr(12) + G1 * Fr(2)
+    assert G1 * Fr(N-1) + G1 == I1
 
 
 class Fqx:
@@ -199,16 +213,7 @@ class Fq12(Fqx):
     p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Point(_Point):
-    a = Fq(0)
-    b = Fq(3)
-    i = [
-        Fq(0),
-        Fq(0)
-    ]
-
-
-class Point2(_Point):
+class Point2(Pt):
     a = Fq2([Fq(0), Fq(0)])
     b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
     i = [
@@ -232,7 +237,7 @@ class Point2(_Point):
         return Point12(nx * w ** 2, ny * w**3)
 
 
-class Point12(_Point):
+class Point12(Pt):
     a = Fq12([Fq(0) for _ in range(12)])
     b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     i = [
@@ -241,7 +246,6 @@ class Point12(_Point):
     ]
 
 
-G1 = Point(Fq(1), Fq(2))
 G2 = Point2(
     Fq2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
          Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
