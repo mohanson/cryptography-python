@@ -40,6 +40,14 @@ class Fp:
     def __neg__(self):
         return self.__class__(self.p - self.x)
 
+    @classmethod
+    def nil(cls):
+        return cls(0)
+
+    @classmethod
+    def one(cls):
+        return cls(1)
+
 
 if __name__ == '__main__':
     Fp.p = 23

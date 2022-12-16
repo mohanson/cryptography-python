@@ -43,6 +43,14 @@ class Fp:
     def __neg__(self):
         return self.__class__(self.p - self.x)
 
+    @classmethod
+    def nil(cls):
+        return cls(0)
+
+    @classmethod
+    def one(cls):
+        return cls(1)
+
 
 if __name__ == '__main__':
     Fp.p = 23
@@ -81,7 +89,7 @@ if __name__ == '__main__':
     Fp.p = 0
 
 
-class Pt:
+class Pa:
     a = None
     b = None
     i = None
@@ -93,7 +101,7 @@ class Pt:
         self.y = y
 
     def __repr__(self):
-        return f'Pt({self.x}, {self.y})'
+        return f'Pa({self.x}, {self.y})'
 
     def __eq__(self, data):
         return self.x == data.x and self.y == data.y
@@ -139,7 +147,7 @@ class Pt:
         return self.__class__(self.x, -self.y)
 
 
-class Pt1(Pt):
+class P1(Pa):
     a = Fq(0)
     b = Fq(3)
     i = [
@@ -148,8 +156,8 @@ class Pt1(Pt):
     ]
 
 
-G1 = Pt1(Fq(1), Fq(2))
-I1 = Pt1(Fq(0), Fq(0))
+G1 = P1(Fq(1), Fq(2))
+I1 = P1(Fq(0), Fq(0))
 
 if __name__ == '__main__':
     assert G1 * Fr(2) + G1 + G1 == G1 * Fr(4)
@@ -158,7 +166,7 @@ if __name__ == '__main__':
     assert G1 * Fr(N-1) + G1 == I1
 
 
-class Fqx:
+class Fa:
     # A class for elements in polynomial extension fields
 
     degree = 0
@@ -169,7 +177,7 @@ class Fqx:
         self.coeffs = coeffs
 
     def __repr__(self):
-        return f'Fqx({self.coeffs})'
+        return f'Fa({self.coeffs})'
 
     def __eq__(self, other):
         return self.coeffs == other.coeffs
@@ -188,7 +196,7 @@ class Fqx:
         return self * self.__class__(polynomial.ext(polynomial.inv(other.coeffs, self.p), self.degree))
 
     def __pow__(self, data):
-        result = self.__class__([Fq(1)] + [Fq(0) for _ in range(self.degree - 1)])
+        result = self.one()
         mulend = self
         while data:
             b = data & 1
@@ -201,55 +209,73 @@ class Fqx:
     def __neg__(self):
         return self.__class__([-c for c in self.coeffs])
 
+    @classmethod
+    def nil(cls):
+        return cls([Fq(0) for _ in range(cls.degree)])
 
-class Fq2(Fqx):
+    @classmethod
+    def one(cls):
+        return cls([Fq(1)] + [Fq(0) for _ in range(cls.degree - 1)])
+
+
+class F2(Fa):
     degree = 2
     p = [Fq(e) for e in [1, 0, 1]]  # i² + 1 = 0
 
 
-class Fq12(Fqx):
+if __name__ == '__main__':
+    a = F2([Fq(1), Fq(0)])
+    b = F2([Fq(1), Fq(2)])
+    assert a + b == F2([Fq(2), Fq(2)])
+    assert b / b == F2([Fq(1), Fq(0)])
+    assert a / b + a / b == (a + a) / b
+    assert a * b + a * b == (a + a) * b
+    assert a ** (P ** 2 - 1) == a
+
+
+class Ft(Fa):
     degree = 12
     p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Point2(Pt):
-    a = Fq2([Fq(0), Fq(0)])
-    b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
+class P2(Pa):
+    a = F2([Fq(0), Fq(0)])
+    b = F2([Fq(3), Fq(0)]) / F2([Fq(9), Fq(1)])
     i = [
-        Fq2([Fq(0), Fq(0)]),
-        Fq2([Fq(0), Fq(0)])
+        F2([Fq(0), Fq(0)]),
+        F2([Fq(0), Fq(0)])
     ]
 
     def twist(self):
         if self.x == self.i[0] and self.y == self.i[1]:
-            return Point12(Point12.i[0], Point12.i[1])
+            return Pt(Pt.i[0], Pt.i[1])
         # "Twist" a point in E(FQ2) into a point in E(FQ12)
-        w = Fq12([Fq(e) for e in [0, 1] + [0] * 10])
+        w = Ft([Fq(e) for e in [0, 1] + [0] * 10])
         # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
         xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fq(9), self.x.coeffs[1]]
         ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fq(9), self.y.coeffs[1]]
         # Isomorphism into subfield of Z[p] / w**12 - 18 * w**6 + 82,
         # where w**6 = x
-        nx = Fq12([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        ny = Fq12([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+        nx = Ft([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+        ny = Ft([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
         # Divide x coord by w**2 and y coord by w**3
-        return Point12(nx * w ** 2, ny * w**3)
+        return Pt(nx * w ** 2, ny * w**3)
 
 
-class Point12(Pt):
-    a = Fq12([Fq(0) for _ in range(12)])
-    b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+class Pt(Pa):
+    a = Ft([Fq(0) for _ in range(12)])
+    b = Ft([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     i = [
-        Fq12([Fq(0) for _ in range(12)]),
-        Fq12([Fq(0) for _ in range(12)])
+        Ft([Fq(0) for _ in range(12)]),
+        Ft([Fq(0) for _ in range(12)])
     ]
 
 
-G2 = Point2(
-    Fq2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
-         Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
-    Fq2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
-         Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
+G2 = P2(
+    F2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
+        Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
+    F2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
+        Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
 )
 G12 = G2.twist()
 
@@ -290,9 +316,9 @@ assert linefunc(one, one, negtwo) == Fq(0)
 
 def cast_point_to_fq12(pt):
     if pt.x == Fq(0) and pt.y == Fq(0):
-        return Point12(Fq12([Fq(0) for _ in range(12)]), Fq12([Fq(0) for _ in range(12)]))
+        return Pt(Ft([Fq(0) for _ in range(12)]), Ft([Fq(0) for _ in range(12)]))
     x, y = pt.x, pt.y
-    return Point12(Fq12([x] + [Fq(0)] * 11), Fq12([y] + [Fq(0)] * 11))
+    return Pt(Ft([x] + [Fq(0)] * 11), Ft([y] + [Fq(0)] * 11))
 
 
 ate_loop_count = 29793968203157093288
@@ -301,10 +327,10 @@ log_ate_loop_count = 63
 
 def miller_loop(q, p):
     # Main miller loop
-    if (q.x == Point12.i[0] and q.y == Point12.i[1]) or (p.x == Point12.i[0] and p.y == Point12.i[1]):
-        return Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    if (q.x == Pt.i[0] and q.y == Pt.i[1]) or (p.x == Pt.i[0] and p.y == Pt.i[1]):
+        return Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     R = q
-    f = Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
+    f = Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
     for i in range(log_ate_loop_count, -1, -1):
         f = f * f * linefunc(R, R, p)
         R = R + R
@@ -312,9 +338,9 @@ def miller_loop(q, p):
             f = f * linefunc(R, q, p)
             R = R + q
     # assert R == multiply(Q, ate_loop_count)
-    Q1 = Point12(q.x ** P, q.y ** P)
+    Q1 = Pt(q.x ** P, q.y ** P)
     # assert is_on_curve(Q1, b12)
-    nQ2 = Point12(Q1.x ** P, -Q1.y ** P)
+    nQ2 = Pt(Q1.x ** P, -Q1.y ** P)
     # assert is_on_curve(nQ2, b12)
     f = f * linefunc(R, Q1, p)
     R = R + Q1
@@ -331,11 +357,11 @@ def pairing(Q, P):
 if __name__ == '__main__':
     p1 = pairing(G2, G1)
     pn1 = pairing(G2, -G1)
-    assert p1 * pn1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 * pn1 == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     np1 = pairing(-G2, G1)
-    assert p1 * np1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 * np1 == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     assert pn1 == np1
-    assert p1 ** N == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert p1 ** N == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     p2 = pairing(G2, G1 * Fr(2))
     assert p1 * p1 == p2
     assert p1 != p2 and p1 != np1 and p2 != np1
