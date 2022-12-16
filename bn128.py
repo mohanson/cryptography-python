@@ -379,3 +379,5 @@ if __name__ == '__main__':
     f = pairing(G2 * Fr(27), G1 * Fr(37))
     g = pairing(G2, G1 * Fr(999))
     assert f == g
+    h = pairing(G2 * Fr(999), G1)
+    assert g == h
