@@ -40,6 +40,9 @@ class Fp:
     def __pow__(self, data):
         return self.__class__(pow(self.x, data, self.p))
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__(self.p - self.x)
 
@@ -143,6 +146,9 @@ class Pa:
             n = n >> 1
         return result
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__(self.x, -self.y)
 
@@ -206,6 +212,9 @@ class Fa:
             data = data >> 1
         return result
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__([-c for c in self.coeffs])
 
@@ -246,17 +255,6 @@ class P2(Pa):
         F2([Fq(0), Fq(0)])
     ]
 
-    def twist(self):
-        if self.x == self.i[0] and self.y == self.i[1]:
-            return Pt(Pt.i[0], Pt.i[1])
-        # Twist a point in E(FQ2) into a point in E(FQ12)
-        w = Ft([Fq(e) for e in [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-        xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fq(9), self.x.coeffs[1]]
-        ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fq(9), self.y.coeffs[1]]
-        nx = Ft([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        ny = Ft([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        return Pt(nx * w ** 2, ny * w ** 3)
-
 
 class Pt(Pa):
     a = Ft([Fq(0) for _ in range(12)])
@@ -281,7 +279,19 @@ if __name__ == '__main__':
     assert G2 * Fr(9) + G2 * Fr(5) == G2 * Fr(12) + G2 * Fr(2)
     assert G2 * Fr(N-1) + G2 == I2
 
-Gt = G2.twist()
+
+def pairing_twist(p):
+    if p.x == P2.i[0] and p.y == P2.i[1]:
+        return Pt(Pt.i[0], Pt.i[1])
+    w = Ft([Fq(e) for e in [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    xcoeffs = [p.x.coeffs[0] - p.x.coeffs[1] * Fq(9), p.x.coeffs[1]]
+    ycoeffs = [p.y.coeffs[0] - p.y.coeffs[1] * Fq(9), p.y.coeffs[1]]
+    nx = Ft([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+    ny = Ft([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+    return Pt(nx * w ** 2, ny * w ** 3)
+
+
+Gt = pairing_twist(G2)
 It = Pt(Ft.nil(), Ft.nil())
 
 if __name__ == '__main__':
@@ -291,7 +301,7 @@ if __name__ == '__main__':
     assert Gt * Fr(N-1) + Gt == It
 
 
-def linefunc(p, q, r):
+def pairing_line_function(p, q, r):
     # Create a function representing the line between p and q, and evaluate it at r.
     # It can be considered as a distance metric between p + q and the second stationary point r.
     #
@@ -303,7 +313,8 @@ def linefunc(p, q, r):
         m = (y2 - y1) / (x2 - x1)
         return m * (x3 - x1) - (y3 - y1)
     if y1 == y2:
-        m = (x1 * x1 + x1 * x1 + x1 * x1 + P1.a) / (y1 + y1)
+        # Simplify (3x² + a) / 2y => 3x² / 2y
+        m = (x1 * x1 + x1 * x1 + x1 * x1) / (y1 + y1)
         return m * (x3 - x1) - (y3 - y1)
     return x3 - x1
 
@@ -311,71 +322,60 @@ def linefunc(p, q, r):
 if __name__ == '__main__':
     x1, x2, x3 = G1, G1 * Fr(2), G1 * Fr(3)
     y1, y2, y3 = -x1, -x2, -x3
-    assert linefunc(x1, x2, x1) == Fq(0)
-    assert linefunc(x1, x2, x2) == Fq(0)
-    assert linefunc(x1, x2, x3) != Fq(0)
-    assert linefunc(x1, x2, y3) == Fq(0)
-    assert linefunc(x1, y1, x1) == Fq(0)
-    assert linefunc(x1, y1, y1) == Fq(0)
-    assert linefunc(x1, y1, x2) != Fq(0)
-    assert linefunc(x1, x1, x1) == Fq(0)
-    assert linefunc(x1, x1, x2) != Fq(0)
-    assert linefunc(x1, x1, y2) == Fq(0)
+    assert pairing_line_function(x1, x2, x1) == Fq(0)
+    assert pairing_line_function(x1, x2, x2) == Fq(0)
+    assert pairing_line_function(x1, x2, x3) != Fq(0)
+    assert pairing_line_function(x1, x2, y3) == Fq(0)
+    assert pairing_line_function(x1, y1, x1) == Fq(0)
+    assert pairing_line_function(x1, y1, y1) == Fq(0)
+    assert pairing_line_function(x1, y1, x2) != Fq(0)
+    assert pairing_line_function(x1, x1, x1) == Fq(0)
+    assert pairing_line_function(x1, x1, x2) != Fq(0)
+    assert pairing_line_function(x1, x1, y2) == Fq(0)
 
 
-def cast_point_to_fq12(pt):
-    if pt.x == Fq(0) and pt.y == Fq(0):
-        return Pt(Ft([Fq(0) for _ in range(12)]), Ft([Fq(0) for _ in range(12)]))
-    x, y = pt.x, pt.y
-    return Pt(Ft([x] + [Fq(0)] * 11), Ft([y] + [Fq(0)] * 11))
-
-
-ate_loop_count = 29793968203157093288
-log_ate_loop_count = 63
-
-
-def miller_loop(q, p):
-    # Main miller loop
+def pairing_miller_loop(q, p):
+    ate_loop_count = 29793968203157093288
+    ate_loop_count_log = 63
     if (q.x == Pt.i[0] and q.y == Pt.i[1]) or (p.x == Pt.i[0] and p.y == Pt.i[1]):
-        return Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    R = q
-    f = Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
-    for i in range(log_ate_loop_count, -1, -1):
-        f = f * f * linefunc(R, R, p)
-        R = R + R
+        return Ft.one()
+    r = q
+    f = Ft.one()
+    for i in range(ate_loop_count_log, -1, -1):
+        f = f * f * pairing_line_function(r, r, p)
+        r = r + r
         if ate_loop_count & (2**i):
-            f = f * linefunc(R, q, p)
-            R = R + q
-    # assert R == multiply(Q, ate_loop_count)
-    Q1 = Pt(q.x ** P, q.y ** P)
-    # assert is_on_curve(Q1, b12)
-    nQ2 = Pt(Q1.x ** P, -Q1.y ** P)
-    # assert is_on_curve(nQ2, b12)
-    f = f * linefunc(R, Q1, p)
-    R = R + Q1
-    f = f * linefunc(R, nQ2, p)
-    # R = add(R, nQ2) This line is in many specifications but it technically does nothing
+            f = f * pairing_line_function(r, q, p)
+            r = r + q
+    a = Pt(q.x ** P, +q.y ** P)
+    b = Pt(a.x ** P, -a.y ** P)
+    f = f * pairing_line_function(r, a, p)
+    r = r + a
+    f = f * pairing_line_function(r, b, p)
     return f ** ((P ** 12 - 1) // N)
 
 
-def pairing(Q, P):
+def pairing(q, p):
     # Pairing computation
-    return miller_loop(Q.twist(), cast_point_to_fq12(P))
+    r = Pt(Ft.nil(), Ft.nil())
+    r.x.coeffs[0] = p.x
+    r.y.coeffs[0] = p.y
+    return pairing_miller_loop(pairing_twist(q), r)
 
 
 if __name__ == '__main__':
-    p1 = pairing(G2, G1)
-    pn1 = pairing(G2, -G1)
-    assert p1 * pn1 == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    np1 = pairing(-G2, G1)
-    assert p1 * np1 == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    assert pn1 == np1
-    assert p1 ** N == Ft([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    p2 = pairing(G2, G1 * Fr(2))
-    assert p1 * p1 == p2
-    assert p1 != p2 and p1 != np1 and p2 != np1
-    po2 = pairing(G2 * Fr(2), G1)
-    assert p1 * p1 == po2
-    p3 = pairing(G2 * Fr(27), G1 * Fr(37))
-    po3 = pairing(G2, G1 * Fr(999))
-    assert p3 == po3
+    a = pairing(G2, +G1)
+    b = pairing(G2, -G1)
+    assert a * b == Ft.one()
+    c = pairing(-G2, G1)
+    assert a * c == Ft.one()
+    assert b == c
+    assert a ** N == Ft.one()
+    d = pairing(G2, G1 * Fr(2))
+    assert a * a == d
+    assert a != d and a != c and d != c
+    e = pairing(G2 * Fr(2), G1)
+    assert a * a == e
+    f = pairing(G2 * Fr(27), G1 * Fr(37))
+    g = pairing(G2, G1 * Fr(999))
+    assert f == g

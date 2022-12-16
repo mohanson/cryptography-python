@@ -37,6 +37,9 @@ class Fp:
     def __pow__(self, data):
         return self.__class__(pow(self.x, data, self.p))
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__(self.p - self.x)
 
@@ -132,6 +135,9 @@ class Pt:
             addend = addend + addend
             n = n >> 1
         return result
+
+    def __pos__(self):
+        return self
 
     def __neg__(self):
         return Pt(self.x, -self.y)
