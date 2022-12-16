@@ -249,17 +249,13 @@ class P2(Pa):
     def twist(self):
         if self.x == self.i[0] and self.y == self.i[1]:
             return Pt(Pt.i[0], Pt.i[1])
-        # "Twist" a point in E(FQ2) into a point in E(FQ12)
-        w = Ft([Fq(e) for e in [0, 1] + [0] * 10])
-        # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
+        # Twist a point in E(FQ2) into a point in E(FQ12)
+        w = Ft([Fq(e) for e in [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
         xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fq(9), self.x.coeffs[1]]
         ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fq(9), self.y.coeffs[1]]
-        # Isomorphism into subfield of Z[p] / w**12 - 18 * w**6 + 82,
-        # where w**6 = x
         nx = Ft([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
         ny = Ft([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        # Divide x coord by w**2 and y coord by w**3
-        return Pt(nx * w ** 2, ny * w**3)
+        return Pt(nx * w ** 2, ny * w ** 3)
 
 
 class Pt(Pa):
@@ -277,13 +273,27 @@ G2 = P2(
     F2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
         Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
 )
-G12 = G2.twist()
+I2 = P2(F2.nil(), F2.nil())
 
-# Create a function representing the line between P1 and P2,
-# and evaluate it at T
+if __name__ == '__main__':
+    assert G2 * Fr(2) + G2 + G2 == G2 * Fr(4)
+    assert G2 + G2 != G2
+    assert G2 * Fr(9) + G2 * Fr(5) == G2 * Fr(12) + G2 * Fr(2)
+    assert G2 * Fr(N-1) + G2 == I2
+
+Gt = G2.twist()
+It = Pt(Ft.nil(), Ft.nil())
+
+if __name__ == '__main__':
+    assert Gt * Fr(2) + Gt + Gt == Gt * Fr(4)
+    assert Gt + Gt != Gt
+    assert Gt * Fr(9) + Gt * Fr(5) == Gt * Fr(12) + Gt * Fr(2)
+    assert Gt * Fr(N-1) + Gt == It
 
 
 def linefunc(P1, P2, T):
+    # Create a function representing the line between P1 and P2,
+    # and evaluate it at T
     # assert P1 and P2 and T # No points-at-infinity allowed, sorry
     x1, y1 = P1.x, P1.y
     x2, y2 = P2.x, P2.y
