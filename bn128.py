@@ -1,6 +1,4 @@
 import polynomial
-import sys
-sys.setrecursionlimit(10000)
 
 
 class Fp:
@@ -165,8 +163,6 @@ class Fqx:
 
     degree = 0
     p = []
-    nil = Fq(0)
-    one = Fq(1)
 
     def __init__(self, coeffs):
         assert len(coeffs) == self.degree
@@ -185,19 +181,22 @@ class Fqx:
         return self.__class__(polynomial.ext(polynomial.sub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(polynomial.ext(polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p), self.degree))
+        mulmod = polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p)
+        return self.__class__(polynomial.ext(mulmod, self.degree))
 
     def __truediv__(self, other):
         return self * self.__class__(polynomial.ext(polynomial.inv(other.coeffs, self.p), self.degree))
 
-    def __pow__(self, other):
-        if other == 0:
-            return self.__class__([self.one] + [self.nil for _ in range(self.degree - 1)])
-        if other == 1:
-            return self.__class__([e for e in self.coeffs])
-        if other % 2 == 0:
-            return (self * self) ** (other // 2)
-        return (self * self) ** (other // 2) * self
+    def __pow__(self, data):
+        result = self.__class__([Fq(1)] + [Fq(0) for _ in range(self.degree - 1)])
+        mulend = self
+        while data:
+            b = data & 1
+            if b == 1:
+                result *= mulend
+            mulend *= mulend
+            data = data >> 1
+        return result
 
     def __neg__(self):
         return self.__class__([-c for c in self.coeffs])
