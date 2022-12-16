@@ -291,37 +291,36 @@ if __name__ == '__main__':
     assert Gt * Fr(N-1) + Gt == It
 
 
-def linefunc(P1, P2, T):
-    # Create a function representing the line between P1 and P2,
-    # and evaluate it at T
-    # assert P1 and P2 and T # No points-at-infinity allowed, sorry
-    x1, y1 = P1.x, P1.y
-    x2, y2 = P2.x, P2.y
-    xt, yt = T.x, T.y
+def linefunc(p, q, r):
+    # Create a function representing the line between p and q, and evaluate it at r.
+    # It can be considered as a distance metric between p + q and the second stationary point r.
+    #
+    # See https://crypto.stanford.edu/pbc/notes/ep/miller.html
+    x1, y1 = p.x, p.y
+    x2, y2 = q.x, q.y
+    x3, y3 = r.x, r.y
     if x1 != x2:
         m = (y2 - y1) / (x2 - x1)
-        return m * (xt - x1) - (yt - y1)
-    elif y1 == y2:
-        m = (x1*x1 + x1*x1 + x1*x1) / (y1 + y1)
-        return m * (xt - x1) - (yt - y1)
-    else:
-        return xt - x1
+        return m * (x3 - x1) - (y3 - y1)
+    if y1 == y2:
+        m = (x1 * x1 + x1 * x1 + x1 * x1 + P1.a) / (y1 + y1)
+        return m * (x3 - x1) - (y3 - y1)
+    return x3 - x1
 
 
-# Check consistency of the "line function"
-one, two, three = G1, G1 * Fr(2), G1 * Fr(3)
-negone, negtwo, negthree = G1 * Fr(N - 1), G1 * Fr(N - 2), G1 * Fr(N - 3)
-
-assert linefunc(one, two, one) == Fq(0)
-assert linefunc(one, two, two) == Fq(0)
-assert linefunc(one, two, three) != Fq(0)
-assert linefunc(one, two, negthree) == Fq(0)
-assert linefunc(one, negone, one) == Fq(0)
-assert linefunc(one, negone, negone) == Fq(0)
-assert linefunc(one, negone, two) != Fq(0)
-assert linefunc(one, one, one) == Fq(0)
-assert linefunc(one, one, two) != Fq(0)
-assert linefunc(one, one, negtwo) == Fq(0)
+if __name__ == '__main__':
+    x1, x2, x3 = G1, G1 * Fr(2), G1 * Fr(3)
+    y1, y2, y3 = -x1, -x2, -x3
+    assert linefunc(x1, x2, x1) == Fq(0)
+    assert linefunc(x1, x2, x2) == Fq(0)
+    assert linefunc(x1, x2, x3) != Fq(0)
+    assert linefunc(x1, x2, y3) == Fq(0)
+    assert linefunc(x1, y1, x1) == Fq(0)
+    assert linefunc(x1, y1, y1) == Fq(0)
+    assert linefunc(x1, y1, x2) != Fq(0)
+    assert linefunc(x1, x1, x1) == Fq(0)
+    assert linefunc(x1, x1, x2) != Fq(0)
+    assert linefunc(x1, x1, y2) == Fq(0)
 
 
 def cast_point_to_fq12(pt):
