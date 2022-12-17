@@ -1,6 +1,4 @@
 import polynomial
-import sys
-sys.setrecursionlimit(10000)
 
 
 class Fp:
@@ -42,8 +40,19 @@ class Fp:
     def __pow__(self, data):
         return self.__class__(pow(self.x, data, self.p))
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__(self.p - self.x)
+
+    @classmethod
+    def nil(cls):
+        return cls(0)
+
+    @classmethod
+    def one(cls):
+        return cls(1)
 
 
 if __name__ == '__main__':
@@ -83,14 +92,10 @@ if __name__ == '__main__':
     Fp.p = 0
 
 
-A = Fq(0)
-B = Fq(3)
-
-
-class _Point:
-    a = A
-    b = B
-    i = [Fq(0), Fq(0)]
+class Pa:
+    a = None
+    b = None
+    i = None
 
     def __init__(self, x, y):
         if x != self.i[0] or y != self.i[1]:
@@ -99,10 +104,9 @@ class _Point:
         self.y = y
 
     def __repr__(self):
-        return f'Point({self.x}, {self.y})'
+        return f'Pa({self.x}, {self.y})'
 
     def __eq__(self, data):
-        assert self.a == data.a and self.b == data.b
         return self.x == data.x and self.y == data.y
 
     def __add__(self, data):
@@ -142,24 +146,44 @@ class _Point:
             n = n >> 1
         return result
 
+    def __pos__(self):
+        return self
+
     def __neg__(self):
         return self.__class__(self.x, -self.y)
 
 
-class Fqx:
+class P1(Pa):
+    a = Fq(0)
+    b = Fq(3)
+    i = [
+        Fq(0),
+        Fq(0)
+    ]
+
+
+G1 = P1(Fq(1), Fq(2))
+I1 = P1(Fq(0), Fq(0))
+
+if __name__ == '__main__':
+    assert G1 * Fr(2) + G1 + G1 == G1 * Fr(4)
+    assert G1 + G1 != G1
+    assert G1 * Fr(9) + G1 * Fr(5) == G1 * Fr(12) + G1 * Fr(2)
+    assert G1 * Fr(N-1) + G1 == I1
+
+
+class Fa:
     # A class for elements in polynomial extension fields
 
     degree = 0
     p = []
-    nil = Fq(0)
-    one = Fq(1)
 
     def __init__(self, coeffs):
         assert len(coeffs) == self.degree
         self.coeffs = coeffs
 
     def __repr__(self):
-        return f'Fqx({self.coeffs})'
+        return f'Fa({self.coeffs})'
 
     def __eq__(self, other):
         return self.coeffs == other.coeffs
@@ -171,173 +195,189 @@ class Fqx:
         return self.__class__(polynomial.ext(polynomial.sub(self.coeffs, other.coeffs), self.degree))
 
     def __mul__(self, other):
-        return self.__class__(polynomial.ext(polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p), self.degree))
+        mulmod = polynomial.rem(polynomial.mul(self.coeffs, other.coeffs), self.p)
+        return self.__class__(polynomial.ext(mulmod, self.degree))
 
     def __truediv__(self, other):
         return self * self.__class__(polynomial.ext(polynomial.inv(other.coeffs, self.p), self.degree))
 
-    def __pow__(self, other):
-        if other == 0:
-            return self.__class__([self.one] + [self.nil for _ in range(self.degree - 1)])
-        if other == 1:
-            return self.__class__([e for e in self.coeffs])
-        if other % 2 == 0:
-            return (self * self) ** (other // 2)
-        return (self * self) ** (other // 2) * self
+    def __pow__(self, data):
+        result = self.one()
+        mulend = self
+        while data:
+            b = data & 1
+            if b == 1:
+                result *= mulend
+            mulend *= mulend
+            data = data >> 1
+        return result
+
+    def __pos__(self):
+        return self
 
     def __neg__(self):
         return self.__class__([-c for c in self.coeffs])
 
+    @classmethod
+    def nil(cls):
+        return cls([Fq(0) for _ in range(cls.degree)])
 
-class Fq2(Fqx):
+    @classmethod
+    def one(cls):
+        return cls([Fq(1)] + [Fq(0) for _ in range(cls.degree - 1)])
+
+
+class F2(Fa):
     degree = 2
     p = [Fq(e) for e in [1, 0, 1]]  # i² + 1 = 0
 
 
-class Fq12(Fqx):
+if __name__ == '__main__':
+    a = F2([Fq(1), Fq(0)])
+    b = F2([Fq(1), Fq(2)])
+    assert a + b == F2([Fq(2), Fq(2)])
+    assert b / b == F2([Fq(1), Fq(0)])
+    assert a / b + a / b == (a + a) / b
+    assert a * b + a * b == (a + a) * b
+    assert a ** (P ** 2 - 1) == a
+
+
+class Ft(Fa):
     degree = 12
     p = [Fq(e) for e in [82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0, 1]]  # w¹² - 18w⁶ + 82 = 0
 
 
-class Point(_Point):
-    a = Fq(0)
-    b = Fq(3)
+class P2(Pa):
+    a = F2([Fq(0), Fq(0)])
+    b = F2([Fq(3), Fq(0)]) / F2([Fq(9), Fq(1)])
     i = [
-        Fq(0),
-        Fq(0)
+        F2([Fq(0), Fq(0)]),
+        F2([Fq(0), Fq(0)])
     ]
 
 
-class Point2(_Point):
-    a = Fq2([Fq(0), Fq(0)])
-    b = Fq2([Fq(3), Fq(0)]) / Fq2([Fq(9), Fq(1)])
+class Pt(Pa):
+    a = Ft([Fq(0) for _ in range(12)])
+    b = Ft([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
     i = [
-        Fq2([Fq(0), Fq(0)]),
-        Fq2([Fq(0), Fq(0)])
-    ]
-
-    def twist(self):
-        if self.x == self.i[0] and self.y == self.i[1]:
-            return Point12(Point12.i[0], Point12.i[1])
-        # "Twist" a point in E(FQ2) into a point in E(FQ12)
-        w = Fq12([Fq(e) for e in [0, 1] + [0] * 10])
-        # Field isomorphism from Z[p] / x**2 to Z[p] / x**2 - 18*x + 82
-        xcoeffs = [self.x.coeffs[0] - self.x.coeffs[1] * Fq(9), self.x.coeffs[1]]
-        ycoeffs = [self.y.coeffs[0] - self.y.coeffs[1] * Fq(9), self.y.coeffs[1]]
-        # Isomorphism into subfield of Z[p] / w**12 - 18 * w**6 + 82,
-        # where w**6 = x
-        nx = Fq12([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        ny = Fq12([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
-        # Divide x coord by w**2 and y coord by w**3
-        return Point12(nx * w ** 2, ny * w**3)
-
-
-class Point12(_Point):
-    a = Fq12([Fq(0) for _ in range(12)])
-    b = Fq12([Fq(e) for e in [3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    i = [
-        Fq12([Fq(0) for _ in range(12)]),
-        Fq12([Fq(0) for _ in range(12)])
+        Ft([Fq(0) for _ in range(12)]),
+        Ft([Fq(0) for _ in range(12)])
     ]
 
 
-G1 = Point(Fq(1), Fq(2))
-G2 = Point2(
-    Fq2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
-         Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
-    Fq2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
-         Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
+G2 = P2(
+    F2([Fq(0x1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed),
+        Fq(0x198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2)]),
+    F2([Fq(0x12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa),
+        Fq(0x090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b)])
 )
-G12 = G2.twist()
+I2 = P2(F2.nil(), F2.nil())
 
-# Create a function representing the line between P1 and P2,
-# and evaluate it at T
+if __name__ == '__main__':
+    assert G2 * Fr(2) + G2 + G2 == G2 * Fr(4)
+    assert G2 + G2 != G2
+    assert G2 * Fr(9) + G2 * Fr(5) == G2 * Fr(12) + G2 * Fr(2)
+    assert G2 * Fr(N-1) + G2 == I2
 
 
-def linefunc(P1, P2, T):
-    # assert P1 and P2 and T # No points-at-infinity allowed, sorry
-    x1, y1 = P1.x, P1.y
-    x2, y2 = P2.x, P2.y
-    xt, yt = T.x, T.y
+def pairing_twist(p):
+    if p.x == P2.i[0] and p.y == P2.i[1]:
+        return Pt(Pt.i[0], Pt.i[1])
+    w = Ft([Fq(e) for e in [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    xcoeffs = [p.x.coeffs[0] - p.x.coeffs[1] * Fq(9), p.x.coeffs[1]]
+    ycoeffs = [p.y.coeffs[0] - p.y.coeffs[1] * Fq(9), p.y.coeffs[1]]
+    nx = Ft([xcoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), xcoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+    ny = Ft([ycoeffs[0], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0), ycoeffs[1], Fq(0), Fq(0), Fq(0), Fq(0), Fq(0)])
+    return Pt(nx * w ** 2, ny * w ** 3)
+
+
+Gt = pairing_twist(G2)
+It = Pt(Ft.nil(), Ft.nil())
+
+if __name__ == '__main__':
+    assert Gt * Fr(2) + Gt + Gt == Gt * Fr(4)
+    assert Gt + Gt != Gt
+    assert Gt * Fr(9) + Gt * Fr(5) == Gt * Fr(12) + Gt * Fr(2)
+    assert Gt * Fr(N-1) + Gt == It
+
+
+def pairing_line_function(p, q, r):
+    # Create a function representing the line between p and q, and evaluate it at r.
+    # It can be considered as a distance metric between p + q and the second stationary point r.
+    #
+    # See https://crypto.stanford.edu/pbc/notes/ep/miller.html
+    x1, y1 = p.x, p.y
+    x2, y2 = q.x, q.y
+    x3, y3 = r.x, r.y
     if x1 != x2:
         m = (y2 - y1) / (x2 - x1)
-        return m * (xt - x1) - (yt - y1)
-    elif y1 == y2:
-        m = (x1*x1 + x1*x1 + x1*x1) / (y1 + y1)
-        return m * (xt - x1) - (yt - y1)
-    else:
-        return xt - x1
-
-
-# Check consistency of the "line function"
-one, two, three = G1, G1 * Fr(2), G1 * Fr(3)
-negone, negtwo, negthree = G1 * Fr(N - 1), G1 * Fr(N - 2), G1 * Fr(N - 3)
-
-assert linefunc(one, two, one) == Fq(0)
-assert linefunc(one, two, two) == Fq(0)
-assert linefunc(one, two, three) != Fq(0)
-assert linefunc(one, two, negthree) == Fq(0)
-assert linefunc(one, negone, one) == Fq(0)
-assert linefunc(one, negone, negone) == Fq(0)
-assert linefunc(one, negone, two) != Fq(0)
-assert linefunc(one, one, one) == Fq(0)
-assert linefunc(one, one, two) != Fq(0)
-assert linefunc(one, one, negtwo) == Fq(0)
-
-
-def cast_point_to_fq12(pt):
-    if pt.x == Fq(0) and pt.y == Fq(0):
-        return Point12(Fq12([Fq(0) for _ in range(12)]), Fq12([Fq(0) for _ in range(12)]))
-    x, y = pt.x, pt.y
-    return Point12(Fq12([x] + [Fq(0)] * 11), Fq12([y] + [Fq(0)] * 11))
-
-
-ate_loop_count = 29793968203157093288
-log_ate_loop_count = 63
-
-
-def miller_loop(q, p):
-    # Main miller loop
-    if (q.x == Point12.i[0] and q.y == Point12.i[1]) or (p.x == Point12.i[0] and p.y == Point12.i[1]):
-        return Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    R = q
-    f = Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])  # FQ12.one()
-    for i in range(log_ate_loop_count, -1, -1):
-        f = f * f * linefunc(R, R, p)
-        R = R + R
-        if ate_loop_count & (2**i):
-            f = f * linefunc(R, q, p)
-            R = R + q
-    # assert R == multiply(Q, ate_loop_count)
-    Q1 = Point12(q.x ** P, q.y ** P)
-    # assert is_on_curve(Q1, b12)
-    nQ2 = Point12(Q1.x ** P, -Q1.y ** P)
-    # assert is_on_curve(nQ2, b12)
-    f = f * linefunc(R, Q1, p)
-    R = R + Q1
-    f = f * linefunc(R, nQ2, p)
-    # R = add(R, nQ2) This line is in many specifications but it technically does nothing
-    return f ** ((P ** 12 - 1) // N)
-
-
-def pairing(Q, P):
-    # Pairing computation
-    return miller_loop(Q.twist(), cast_point_to_fq12(P))
+        return m * (x3 - x1) - (y3 - y1)
+    if y1 == y2:
+        # Simplify (3x² + a) / 2y => 3x² / 2y
+        m = (x1 * x1 + x1 * x1 + x1 * x1) / (y1 + y1)
+        return m * (x3 - x1) - (y3 - y1)
+    return x3 - x1
 
 
 if __name__ == '__main__':
-    p1 = pairing(G2, G1)
-    pn1 = pairing(G2, -G1)
-    assert p1 * pn1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    np1 = pairing(-G2, G1)
-    assert p1 * np1 == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    assert pn1 == np1
-    assert p1 ** N == Fq12([Fq(e) for e in [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-    p2 = pairing(G2, G1 * Fr(2))
-    assert p1 * p1 == p2
-    assert p1 != p2 and p1 != np1 and p2 != np1
-    po2 = pairing(G2 * Fr(2), G1)
-    assert p1 * p1 == po2
-    p3 = pairing(G2 * Fr(27), G1 * Fr(37))
-    po3 = pairing(G2, G1 * Fr(999))
-    assert p3 == po3
+    x1, x2, x3 = G1, G1 * Fr(2), G1 * Fr(3)
+    y1, y2, y3 = -x1, -x2, -x3
+    assert pairing_line_function(x1, x2, x1) == Fq(0)
+    assert pairing_line_function(x1, x2, x2) == Fq(0)
+    assert pairing_line_function(x1, x2, x3) != Fq(0)
+    assert pairing_line_function(x1, x2, y3) == Fq(0)
+    assert pairing_line_function(x1, y1, x1) == Fq(0)
+    assert pairing_line_function(x1, y1, y1) == Fq(0)
+    assert pairing_line_function(x1, y1, x2) != Fq(0)
+    assert pairing_line_function(x1, x1, x1) == Fq(0)
+    assert pairing_line_function(x1, x1, x2) != Fq(0)
+    assert pairing_line_function(x1, x1, y2) == Fq(0)
+
+
+def pairing_miller_loop(q, p):
+    ate_loop_count = 29793968203157093288
+    ate_loop_count_log = 63
+    if (q.x == Pt.i[0] and q.y == Pt.i[1]) or (p.x == Pt.i[0] and p.y == Pt.i[1]):
+        return Ft.one()
+    r = q
+    f = Ft.one()
+    for i in range(ate_loop_count_log, -1, -1):
+        f = f * f * pairing_line_function(r, r, p)
+        r = r + r
+        if ate_loop_count & (2**i):
+            f = f * pairing_line_function(r, q, p)
+            r = r + q
+    a = Pt(q.x ** P, +q.y ** P)
+    b = Pt(a.x ** P, -a.y ** P)
+    f = f * pairing_line_function(r, a, p)
+    r = r + a
+    f = f * pairing_line_function(r, b, p)
+    return f ** ((P ** 12 - 1) // N)
+
+
+def pairing(q, p):
+    # Pairing computation
+    r = Pt(Ft.nil(), Ft.nil())
+    r.x.coeffs[0] = p.x
+    r.y.coeffs[0] = p.y
+    return pairing_miller_loop(pairing_twist(q), r)
+
+
+if __name__ == '__main__':
+    a = pairing(G2, +G1)
+    b = pairing(G2, -G1)
+    assert a * b == Ft.one()
+    c = pairing(-G2, G1)
+    assert a * c == Ft.one()
+    assert b == c
+    assert a ** N == Ft.one()
+    d = pairing(G2, G1 * Fr(2))
+    assert a * a == d
+    assert a != d and a != c and d != c
+    e = pairing(G2 * Fr(2), G1)
+    assert a * a == e
+    f = pairing(G2 * Fr(27), G1 * Fr(37))
+    g = pairing(G2, G1 * Fr(999))
+    assert f == g
+    h = pairing(G2 * Fr(999), G1)
+    assert g == h
