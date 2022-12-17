@@ -35,7 +35,7 @@ f(x) = a₀ + a₁x + ... + aₙxⁿ
 
 ## Encoding data into polynomial using Lagrange Interpolation
 
-Given (xi, yi), xi != xj, 构造一个多项式 f(xi) = yi degree is n - 1
+Given (xᵢ, yᵢ), 构造一个多项式 f(xᵢ) = yᵢ degree is n - 1
 
 <https://zh.wikipedia.org/wiki/%E6%8B%89%E6%A0%BC%E6%9C%97%E6%97%A5%E6%8F%92%E5%80%BC%E6%B3%95>
 
