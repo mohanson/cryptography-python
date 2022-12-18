@@ -29,13 +29,10 @@ for i in range(len(coeffs)):
 
 px = Fr(1)
 py = Fr(4)
-coeffs_1 = [e for e in coeffs]
-coeffs_1[0] = coeffs_1[0] - py
-coeffs_2 = [-px, Fr(1)]
-coeffs_q = polynomial.div(coeffs_1, coeffs_2)
+coeffs = polynomial.div(polynomial.sub(coeffs, [py]), [-px, Fr(1)])
 proofs = I1
-for i in range(len(coeffs_q)):
-    proofs = proofs + pk_g1[i] * coeffs_q[i]
+for i in range(len(coeffs)):
+    proofs = proofs + pk_g1[i] * coeffs[i]
 
 lhs = pairing(G2, commit - G1 * py)
 rhs = pairing(pk_g2[1] - G2 * px, proofs)
