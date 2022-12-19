@@ -12,3 +12,8 @@ paper: <https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf>
 
 - `polynomial_numpy.py`: polynomial operation by numpy.
 - `polynomial.py`: polynomial operation by hand writting python.
+
+## bn128
+
+- `bn128.py`: bn128 curve, implements [eip-196](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-196.md), [eip-197](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-197.md).
+- `bn128_ethereum_api.py`: bn128 pairing testsuite.
