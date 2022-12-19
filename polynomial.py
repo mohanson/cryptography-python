@@ -104,6 +104,15 @@ def interp(c1, c2):
     return p
 
 
+def vanish(c1):
+    # See: https://aszepieniec.github.io/stark-anatomy/basic-tools
+    x = [c1[0].__class__(0), c1[0].__class__(1)]
+    a = [c1[0].__class__(1)]
+    for d in c1:
+        a = mul(a, sub(x, [d]))
+    return a
+
+
 if __name__ == '__main__':
     c1 = [4, -2, 5]
     c2 = [2, -5, 2]
@@ -118,3 +127,5 @@ if __name__ == '__main__':
     assert rem([-4, 0, -2, 1], [-3, 1]) == [5]
     assert rem(mul(inv(c1, c2), c1), c2)[0] == 1
     assert interp([1,  2,  3,  4], [4, 15, 40, 85]) == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
+    assert vanish([0, 1]) == [0, -1, 1]
+    assert vanish([1, 2]) == [2, -3, 1]
