@@ -91,6 +91,8 @@ def inv(c1, c2):
 
 def interp(c1, c2):
     # Lagrange interpolation, copied from scipy.interpolate.lagrange.
+    # Note that unlike scipy's implementation, the results are sequences of coefficients from lowest order term to
+    # highest.
     M = len(c1)
     p = [c1[0].__class__(0)]
     for j in range(M):
@@ -99,7 +101,7 @@ def interp(c1, c2):
             if k == j:
                 continue
             fac = c1[j]-c1[k]
-            pt = mul([c1[0].__class__(1) / fac, -c1[k] / fac], pt)
+            pt = mul([-c1[k] / fac, c1[0].__class__(1) / fac], pt)
         p = add(p, pt)
     return p
 
@@ -126,6 +128,8 @@ if __name__ == '__main__':
     assert div([-4, 0, -2, 1], [-3, 1]) == [3, 1, 1]
     assert rem([-4, 0, -2, 1], [-3, 1]) == [5]
     assert rem(mul(inv(c1, c2), c1), c2)[0] == 1
-    assert interp([1,  2,  3,  4], [4, 15, 40, 85]) == [0.9999999999999982, 1.0, 1.0000000000000284, 1.0]
+    assert interp([1,  2,  3,  4], [4, 15, 40, 85]) == [1.0, 1.0000000000000284, 1.0, 0.9999999999999982]
+    assert interp([0, 1, 2], [0, 1, 8]) == [0, -2, 3]
+    assert interp([1, 2, 3], [1, 4, 9]) == [0, 0, 1]
     assert vanish([0, 1]) == [0, -1, 1]
     assert vanish([1, 2]) == [2, -3, 1]
