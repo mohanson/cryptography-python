@@ -10,9 +10,7 @@ import polynomial
 # [6] https://dankradfeist.de/ethereum/2021/10/13/kate-polynomial-commitments-mandarin.html
 
 
-Fq = bn128.Fq
 Fr = bn128.Fr
-P1 = bn128.P1
 G1 = bn128.G1
 I1 = bn128.I1
 I2 = bn128.I2
@@ -45,7 +43,7 @@ zx = polynomial.vanish(px)
 qx = polynomial.div(polynomial.sub(fx, ix), zx)
 proofs = sum([pk_g1[i] * qx[i] for i in range(len(qx))], start=I1)
 ix_sg1 = sum([pk_g1[i] * ix[i] for i in range(len(ix))], start=I1)
-zx_sg2 = sum([pk_g2[i] * zx[i] for i in range(len(zx))], start=I1)
+zx_sg2 = sum([pk_g2[i] * zx[i] for i in range(len(zx))], start=I2)
 lhs = pairing(G2, commit - ix_sg1)
 rhs = pairing(zx_sg2, proofs)
 assert lhs == rhs
