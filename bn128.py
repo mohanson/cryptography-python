@@ -88,7 +88,7 @@ class Fr(Fp):
 
 if __name__ == '__main__':
     Fp.p = 13
-    assert polynomial.interp([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
+    assert polynomial.lagrange([Fp(1), Fp(4)], [Fp(6), Fp(2)]) == [Fp(3), Fp(3)]
     Fp.p = 0
 
 

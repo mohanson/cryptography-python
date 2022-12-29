@@ -23,7 +23,7 @@ pk_g2 = [G2 * (sk**i) for i in range(10)]
 
 ax = [Fr(e) for e in [0,  1,  2,  3]]
 ay = [Fr(e) for e in [4, 15, 40, 85]]
-fx = polynomial.interp(ax, ay)
+fx = polynomial.lagrange(ax, ay)
 commit = sum([pk_g1[i] * fx[i] for i in range(len(fx))], start=I1)
 
 # 单个证明
@@ -38,8 +38,8 @@ assert lhs == rhs
 # 批量证明
 px = [Fr(e) for e in [0,  1]]
 py = [Fr(e) for e in [4, 15]]
-ix = polynomial.interp(px, py)
-zx = polynomial.vanish(px)
+ix = polynomial.lagrange(px, py)
+zx = polynomial.zerofier(px)
 qx = polynomial.div(polynomial.sub(fx, ix), zx)
 proofs = sum([pk_g1[i] * qx[i] for i in range(len(qx))], start=I1)
 ix_sg1 = sum([pk_g1[i] * ix[i] for i in range(len(ix))], start=I1)

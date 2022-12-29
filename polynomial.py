@@ -89,7 +89,17 @@ def inv(c1, c2):
     return clr([e/newr[0] for e in newt[:deg(c2)]])
 
 
-def interp(c1, c2):
+def evaluate(c1, pt):
+    # Polynomial evaluation on a value.
+    xi = c1[0].__class__(1)
+    rt = c1[0].__class__(0)
+    for c in c1:
+        rt = rt + xi * c
+        xi = xi * pt
+    return rt
+
+
+def lagrange(c1, c2):
     # Lagrange interpolation, copied from scipy.interpolate.lagrange.
     # Note that unlike scipy's implementation, the results are sequences of coefficients from lowest order term to
     # highest.
@@ -106,7 +116,7 @@ def interp(c1, c2):
     return p
 
 
-def vanish(c1):
+def zerofier(c1):
     # See: https://aszepieniec.github.io/stark-anatomy/basic-tools
     x = [c1[0].__class__(0), c1[0].__class__(1)]
     a = [c1[0].__class__(1)]
@@ -128,8 +138,8 @@ if __name__ == '__main__':
     assert div([-4, 0, -2, 1], [-3, 1]) == [3, 1, 1]
     assert rem([-4, 0, -2, 1], [-3, 1]) == [5]
     assert rem(mul(inv(c1, c2), c1), c2)[0] == 1
-    assert interp([1,  2,  3,  4], [4, 15, 40, 85]) == [1.0, 1.0000000000000284, 1.0, 0.9999999999999982]
-    assert interp([0, 1, 2], [0, 1, 8]) == [0, -2, 3]
-    assert interp([1, 2, 3], [1, 4, 9]) == [0, 0, 1]
-    assert vanish([0, 1]) == [0, -1, 1]
-    assert vanish([1, 2]) == [2, -3, 1]
+    assert lagrange([1,  2,  3,  4], [4, 15, 40, 85]) == [1.0, 1.0000000000000284, 1.0, 0.9999999999999982]
+    assert lagrange([0, 1, 2], [0, 1, 8]) == [0, -2, 3]
+    assert lagrange([1, 2, 3], [1, 4, 9]) == [0, 0, 1]
+    assert zerofier([0, 1]) == [0, -1, 1]
+    assert zerofier([1, 2]) == [2, -3, 1]
