@@ -43,6 +43,14 @@ class Fp:
     def __neg__(self):
         return self.__class__(self.p - self.x)
 
+    def sqrt(self):
+        # https://www.staff.uni-mainz.de/pommeren/Cryptology/Asymmetric/5_NTh/SqRprim.pdf, 5.3
+        # Note source number should be quadratic residued.
+        if (self.p - 3) % 4 == 0:
+            m = (self.p - 3) // 4
+            return self ** (m + 1)
+        raise Exception('unreachable')
+
     @classmethod
     def nil(cls):
         return cls(0)
@@ -169,3 +177,6 @@ if __name__ == '__main__':
     p = G * Fr(0x5f6717883bef25f45a129c11fcac1567d74bda5a9ad4cbffc8203c0da2a1473c)
     assert p.x.x == 0x63983e4c8002f443ccb58f7cd8232b75af26c432e30cb7584bed0dbc35bcf86a
     assert p.y.x == 0xcdc066239b4c9a967ffd2429d6ffe57850122163413348ba520726e5b08a9d79
+
+    x = Fq(0x660fe3dd941bc58104fff3b424d82cd69658191f91166af80528e65d07cec0c0)
+    assert x.sqrt() * x.sqrt() == x
