@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+# BIP-0173 https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+# BIP-0350 https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki
 # Copied from https://raw.githubusercontent.com/sipa/bech32/master/ref/python/segwit_addr.py
 
 """Reference implementation for Bech32/Bech32m and segwit addresses."""
