@@ -14,7 +14,7 @@ print(f'hash={m}')
 
 # Sign
 while True:
-    k = secp256k1.Fr(random.randint(0, secp256k1.N))
+    k = secp256k1.Fr(random.randint(0, secp256k1.N - 1))
     R = secp256k1.G * k
     r = secp256k1.Fr(R.x.x)
     if r.x == 0:
