@@ -144,6 +144,9 @@ class Pt:
             n = n >> 1
         return result
 
+    def __truediv__(self, k):
+        return self.__mul__(k ** -1)
+
     def __pos__(self):
         return self
 
