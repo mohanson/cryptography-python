@@ -1,3 +1,16 @@
+## cryptography-python
+
+This is a tutorial project about cryptography in python. Follow the steps and you will fully understand the magic of elliptic curves from scratch.
+
+- Each file can be run independently!
+- There are detailed paper references in the comments of the code
+
+Based on this project, I implemented the SDKs of three famous blockchain projects: BTC, ETH and CKB.
+
+- <https://github.com/mohanson/pybtc>: Early stage of the project.
+- <https://github.com/mohanson/pyeth>: Almost fully supported.
+- <https://github.com/mohanson/pyckb>: Almost fully supported.
+
 ## secp256k1
 
 paper: <https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf>
