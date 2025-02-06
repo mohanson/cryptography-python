@@ -111,20 +111,22 @@ class Pt:
         # https://www.cs.miami.edu/home/burt/learning/Csc609.142/ecdsa-cert.pdf
         # Don Johnson, Alfred Menezes and Scott Vanstone, The Elliptic Curve Digital Signature Algorithm (ECDSA)
         # 4.1 Elliptic Curves Over Fp
-        if self.x == Fq(0) and self.y == Fq(0):
-            return data
-        if data.x == Fq(0) and data.y == Fq(0):
-            return self
-        if self.x == data.x and self.y == -data.y:
-            return I
         x1, x2 = self.x, data.x
         y1, y2 = self.y, data.y
-        if self.y == data.y:
-            s = (x1 * x1 + x1 * x1 + x1 * x1 + A) / (y1 + y1)
-        else:
-            s = (y2 - y1) / (x2 - x1)
-        x3 = s * s - x1 - x2
-        y3 = s * (x1 - x3) - y1
+        if x1 == Fq(0) and y1 == Fq(0):
+            return data
+        if x2 == Fq(0) and y2 == Fq(0):
+            return self
+        if x1 == x2 and y1 == +y2:
+            sk = (x1 * x1 + x1 * x1 + x1 * x1 + A) / (y1 + y1)
+            x3 = sk * sk - x1 - x2
+            y3 = sk * (x1 - x3) - y1
+            return Pt(x3, y3)
+        if x1 == x2 and y1 == -y2:
+            return I
+        sk = (y2 - y1) / (x2 - x1)
+        x3 = sk * sk - x1 - x2
+        y3 = sk * (x1 - x3) - y1
         return Pt(x3, y3)
 
     def __sub__(self, data):
