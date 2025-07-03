@@ -26,7 +26,7 @@ ay = [Fr(e) for e in [4, 15, 40, 85]]
 fx = polynomial.lagrange(ax, ay)
 commit = sum([pk_g1[i] * fx[i] for i in range(len(fx))], start=I1)
 
-# 单个证明
+# Verify single
 px = Fr(1)
 py = Fr(15)
 qx = polynomial.div(polynomial.sub(fx, [py]), [-px, Fr(1)])
@@ -35,7 +35,7 @@ lhs = pairing(G2, commit - G1 * py)
 rhs = pairing(pk_g2[1] - G2 * px, proofs)
 assert lhs == rhs
 
-# 批量证明
+# Verify batch
 px = [Fr(e) for e in [0,  1]]
 py = [Fr(e) for e in [4, 15]]
 ix = polynomial.lagrange(px, py)
