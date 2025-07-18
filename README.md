@@ -5,10 +5,11 @@ This is a tutorial project about cryptography in python. Follow the steps and yo
 - Each file can be run independently!
 - There are detailed paper references in the comments of the code
 
-Based on this project, I implemented the SDKs of three famous blockchain projects: BTC, ETH and CKB.
+Based on this project, I implemented the SDKs of four famous blockchain projects: BTC, ETH, SOL and CKB.
 
-- <https://github.com/mohanson/pybtc>: Almost fully supported.
-- <https://github.com/mohanson/pyeth>: Almost fully supported.
+- <https://github.com/mohanson/pabtc>: Almost fully supported.
+- <https://github.com/mohanson/pleth>: Almost fully supported.
+- <https://github.com/mohanson/pxsol>: Almost fully supported.
 - <https://github.com/mohanson/pyckb>: Almost fully supported.
 
 ## Secp256k1
