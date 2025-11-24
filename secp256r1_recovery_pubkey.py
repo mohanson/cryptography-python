@@ -22,7 +22,7 @@ while True:
     print(f'sigs={s}')
     break
 
-# https://www.secg.org/sec1-v2.pdf, 4.1.6
+# Verify. See: https://www.secg.org/sec1-v2.pdf, 4.1.6
 for j in range(2):
     x = r.x + secp256r1.N * j
     x = secp256r1.Fq(x)
